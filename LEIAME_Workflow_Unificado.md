@@ -32,6 +32,11 @@ Os três problemas foram corrigidos no workflow novo.
 2. **Calcula o dia seguinte** (D+1) no fuso `America/Sao_Paulo`.
    A constante `OFFSET_DIAS` no nó **"Code - Data Alvo"** permite testar outras
    datas (ex.: `3` = D+3). Em produção deixe `1`.
+   No mesmo nó existe a constante **`MODO_TESTE`** (padrão: `true`): enquanto
+   estiver `true`, **nenhum e-mail é enviado** — os destinatários passam pelos
+   nós de simulação e são registrados na planilha de controle com status
+   `Enviado (SIMULAÇÃO)` / `Enviado Formador (SIMULAÇÃO)`. Quando os testes
+   estiverem OK, mude para `MODO_TESTE = false` para ativar o envio real.
 3. **Localiza a aba do mês** na agenda
    (`11_isrdRYiew08xo7rZyBqx1YkvyfR7IRmrHui37x768`): lê os metadados da planilha e
    escolhe a aba cujo nome contém o mês do dia alvo (ignora acentos/maiúsculas;
@@ -40,6 +45,9 @@ Os três problemas foram corrigidos no workflow novo.
 4. **Filtra os cursos do dia alvo** pela coluna A (DATA) e lê as colunas A–N
    (DATA, INÍCIO, TÉRMINO, DIA DA SEMANA, ESPAÇO, FORMADORES, TÍTULO, ETAPAS,
    COMPONENTE CURRICULAR, PÚBLICO-ALVO, FORMATO, VAGAS, DIVULGAR, GOOGLE SALA DE AULA).
+   A coluna A pode conter **só o dia** (`6` ou `06`), **dia/mês** (`6/7`,
+   `06/07`) ou a **data completa** (`06/07/2026`) — todos os formatos são
+   reconhecidos, já que a aba é do próprio mês.
 5. **Lista os arquivos da pasta** do Drive (`1-qF8Yh0oIXE8VJwypPjFkcjET1YCVmya`).
    O prefixo `AAAA MM DD ` (data + espaço) do nome do arquivo é ignorado e o
    **TÍTULO** precisa estar **contido** no restante do nome (comparação sem
@@ -70,7 +78,7 @@ Os três problemas foram corrigidos no workflow novo.
    | Nome do(s) formador(es) | nomes da aba ID (ou FORMADORES da agenda) |
    | Data da aula | dia alvo (D+1) |
    | Nome do aluno / E-mail do aluno | destinatário |
-   | Status | `Enviado` (aluno) ou `Enviado (Formador)` (professor) |
+   | Status | `Enviado` / `Enviado (Formador)` — ou `... (SIMULAÇÃO)` em modo teste |
 
 ---
 
@@ -79,7 +87,8 @@ Os três problemas foram corrigidos no workflow novo.
 1. **Credencial do Gmail**: os nós **"Gmail - Enviar Aluno"** e
    **"Gmail - Enviar Professor"** foram criados **sem credencial** (não tenho
    acesso à sua). Abra cada um e selecione a credencial Gmail usada no seu
-   workflow de envio aos formadores.
+   workflow de envio aos formadores. Enquanto `MODO_TESTE = true`, esses nós
+   não são executados, então dá para testar antes mesmo de configurá-los.
 2. **Texto dos e-mails**: coloquei um modelo em HTML com título, data, horário,
    espaço, formato e formadores. Se quiser manter exatamente o texto do seu
    workflow antigo de envio, é só colar o assunto/corpo nos dois nós Gmail.
@@ -90,7 +99,9 @@ Os três problemas foram corrigidos no workflow novo.
    outro horário que não 08:00.
 5. **Teste sem esperar o dia certo**: no nó "Code - Data Alvo", mude
    `OFFSET_DIAS` para o número de dias até uma data que tenha curso, execute
-   manualmente e confira o resultado; depois volte para `1` e **ative** o workflow.
+   manualmente e confira a planilha de controle (status com "SIMULAÇÃO").
+   Quando tudo estiver OK: volte `OFFSET_DIAS` para `1`, mude
+   `MODO_TESTE` para `false` e **ative** o workflow.
 
 ## Observações
 
