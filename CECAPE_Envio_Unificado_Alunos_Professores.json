@@ -1,0 +1,1186 @@
+{
+  "name": "CECAPE - Envio Unificado Alunos e Professores (D+1)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "df128874-47a1-4176-bb90-1a7d42aeac42",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "3ef8101b-79a5-4a2c-9bbd-37a6324c500d",
+      "name": "Schedule Trigger - Diário",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─────────────────────────────────────────────────────────────────────────────\n// CONFIGURAÇÃO\n// OFFSET_DIAS = 1  → verifica o DIA SEGUINTE à data da execução (produção)\n// Para testar outra data, mude o valor (ex.: 3 = daqui a 3 dias)\n// ─────────────────────────────────────────────────────────────────────────────\nconst OFFSET_DIAS = 1;\n\nconst tz = 'America/Sao_Paulo';\nconst agora = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));\nfunction pad(v){ return String(v).padStart(2, '0'); }\n\nconst alvo = new Date(agora);\nalvo.setDate(alvo.getDate() + OFFSET_DIAS);\n\nconst yyyy = alvo.getFullYear();\nconst mm   = pad(alvo.getMonth() + 1);\nconst dd   = pad(alvo.getDate());\n\nconst mesNome   = alvo.toLocaleDateString('pt-BR', { timeZone: tz, month: 'long' });\nconst diaSemana = alvo.toLocaleDateString('pt-BR', { timeZone: tz, weekday: 'long' });\n\nfunction normalize(s = '') {\n  return String(s).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\n}\n\nreturn [{ json: {\n  offset_dias: OFFSET_DIAS,\n  eh_amanha: OFFSET_DIAS === 1,\n  alvo_ymd: `${yyyy}-${mm}-${dd}`,\n  alvo_ddmmyyyy: `${dd}/${mm}/${yyyy}`,\n  dd, mm, yyyy,\n  dia_semana: diaSemana,\n  mes_nome: mesNome.toUpperCase(),\n  mes_normalizado: normalize(mesNome),\n  ano: String(yyyy),\n  hoje_ymd: `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}-${pad(agora.getDate())}`\n}}];\n"
+      },
+      "id": "5ce7e01a-3dd1-4360-99ea-babe2a6f85d0",
+      "name": "Code - Data Alvo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/11_isrdRYiew08xo7rZyBqx1YkvyfR7IRmrHui37x768?fields=sheets(properties(sheetId%2Ctitle))",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "4de8a5ef-3c03-43b0-9576-dd0dac5c6278",
+      "name": "HTTP - Metadados Agenda",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nIfyEUF469O4ic3a",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Escolhe a aba (guia) do mês do dia alvo na planilha de agenda.\n// Aceita nomes como \"JULHO\", \"Julho 2026\", \"julho/26\" etc. (ignora acentos/caixa).\nconst ctx  = $('Code - Data Alvo').first().json;\nconst resp = $input.first().json;\nconst sheets = resp.sheets ?? resp.body?.sheets ?? [];\n\nfunction normalize(s = '') {\n  return String(s).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\n}\n\nconst mes = ctx.mes_normalizado; // ex.: \"julho\"\nconst ano = ctx.ano;             // ex.: \"2026\"\n\nlet aba = null;\n// 1ª preferência: aba que contém o mês E o ano; 2ª: aba que contém só o mês\nfor (const s of sheets) {\n  const t = normalize(s.properties?.title || '');\n  if (t.includes(mes) && t.includes(ano)) { aba = s.properties.title; break; }\n}\nif (!aba) {\n  for (const s of sheets) {\n    const t = normalize(s.properties?.title || '');\n    if (t.includes(mes)) { aba = s.properties.title; break; }\n  }\n}\n\nreturn [{ json: {\n  ...ctx,\n  aba,\n  aba_encontrada: !!aba,\n  abas_disponiveis: sheets.map(s => s.properties?.title)\n}}];\n"
+      },
+      "id": "e4314f26-593f-4f79-853f-d705ec3247bf",
+      "name": "Code - Escolher Aba do Mês",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.aba_encontrada }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3760ba00-6c59-4a7a-abf3-dab4dd08d32e",
+      "name": "IF - Aba Encontrada?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        896,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/11_isrdRYiew08xo7rZyBqx1YkvyfR7IRmrHui37x768/values/{{ encodeURIComponent($json.aba) }}%21A1%3AN500?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "0201dc8d-f114-4502-ae52-ba61bffdf365",
+      "name": "HTTP - Ler Agenda do Mês",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        208
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nIfyEUF469O4ic3a",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $input.first().json;\nconsole.log(`Aba do mês não encontrada na agenda. Mês: ${c.mes_nome}. Abas disponíveis: ${JSON.stringify(c.abas_disponiveis)}`);\nreturn [];"
+      },
+      "id": "e193338c-9a80-4928-8cec-847cc4f15939",
+      "name": "Code - Sem Aba do Mês",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtra na agenda do mês as linhas cuja coluna A (DATA) é o dia alvo.\n// Colunas: A=DATA B=INÍCIO C=TÉRMINO D=DIA DA SEMANA E=ESPAÇO F=FORMADORES\n//          G=TÍTULO H=ETAPAS I=COMPONENTE CURRICULAR J=PÚBLICO-ALVO\n//          K=FORMATO L=VAGAS M=DIVULGAR N=GOOGLE SALA DE AULA\nconst ctx  = $('Code - Escolher Aba do Mês').first().json;\nconst resp = $input.first().json;\nconst matriz = resp.values ?? resp.body?.values ?? [];\n\nfunction pad(v){ return String(v).padStart(2, '0'); }\nfunction parseData(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n  if (typeof raw === 'number') {\n    if (raw < 20000 || raw > 60000) return null; // fora disso não é data plausível\n    const ep = new Date(Date.UTC(1899, 11, 30));\n    const d  = new Date(ep.getTime() + raw * 86400000);\n    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;\n  }\n  const s  = String(raw).trim();\n  const br = s.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{2,4})/);\n  if (br) { let a = br[3]; if (a.length === 2) a = '20' + a; return `${a}-${pad(br[2])}-${pad(br[1])}`; }\n  const iso = s.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;\n  return null;\n}\nfunction txt(v){ return (v ?? '').toString().trim(); }\n\nconst cursos = [];\nfor (const linha of matriz) {\n  const l = linha || [];\n  if (parseData(l[0]) !== ctx.alvo_ymd) continue;\n  const titulo = txt(l[6]);\n  if (!titulo) continue;\n  cursos.push({\n    DATA: txt(l[0]),\n    INICIO: txt(l[1]),\n    TERMINO: txt(l[2]),\n    DIA_SEMANA: txt(l[3]),\n    ESPACO: txt(l[4]),\n    FORMADORES: txt(l[5]),\n    TITULO: titulo,\n    ETAPAS: txt(l[7]),\n    COMPONENTE_CURRICULAR: txt(l[8]),\n    PUBLICO_ALVO: txt(l[9]),\n    FORMATO: txt(l[10]),\n    VAGAS: txt(l[11]),\n    DIVULGAR: txt(l[12]),\n    GOOGLE_SALA_DE_AULA: txt(l[13])\n  });\n}\n\nconsole.log(`Aba \"${ctx.aba}\" — cursos em ${ctx.alvo_ymd}: ${cursos.length}`);\nreturn [{ json: { ...ctx, cursos, total_cursos: cursos.length, tem_curso: cursos.length > 0 } }];\n"
+      },
+      "id": "c4734aee-5bf4-40ec-bf02-5d91323e1528",
+      "name": "Code - Cursos do Dia Alvo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.tem_curso }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8750aecb-df68-42ce-a71a-3495c9612667",
+      "name": "IF - Tem Curso?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/drive/v3/files?q=%271-qF8Yh0oIXE8VJwypPjFkcjET1YCVmya%27+in+parents+and+trashed%3Dfalse&fields=files(id%2Cname%2CmimeType)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "5dc4b398-f83b-4a60-9cf8-7f89ffd89041",
+      "name": "HTTP - Listar Arquivos da Pasta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1792,
+        112
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "wS6KN5d9PVC5ao2X",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const c = $input.first().json;\nconsole.log(`Nenhum curso agendado para ${c.alvo_ddmmyyyy} (${c.dia_semana}). Nada a enviar.`);\nreturn [];"
+      },
+      "id": "e3546e71-9143-40be-aebe-e84027dc33bc",
+      "name": "Code - Sem Curso no Dia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Casa cada curso do dia alvo com o(s) arquivo(s) da pasta do Drive.\n// Os arquivos começam com \"AAAA MM DD \" (data de início do curso) — esse\n// prefixo é ignorado e o TÍTULO precisa estar CONTIDO no restante do nome.\n// Se um título casar com mais de um arquivo, todos seguem no fluxo: a\n// verificação da data na aba FREQUÊNCIA decide qual(is) vale(m).\nconst ctx  = $('Code - Cursos do Dia Alvo').first().json;\nconst resp = $input.first().json;\nconst files = resp.files ?? resp.body?.files ?? [];\n\nfunction normalize(s = '') {\n  return String(s || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, ' ').replace(/\\s+/g, ' ').trim();\n}\nfunction semPrefixoData(nome) {\n  const m = String(nome || '').match(/^\\d{4}\\s+\\d{2}\\s+\\d{2}\\s+(.*)$/);\n  return m ? m[1] : String(nome || '');\n}\n\nconst planilhas = files\n  .filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && f.name)\n  .map(f => ({ id: f.id, name: f.name, nome_normalizado: normalize(semPrefixoData(f.name)) }));\n\nconst base = {\n  alvo_ymd: ctx.alvo_ymd,\n  alvo_ddmmyyyy: ctx.alvo_ddmmyyyy,\n  dia_semana: ctx.dia_semana,\n  eh_amanha: ctx.eh_amanha\n};\n\nconst saida = [];\nfor (const curso of ctx.cursos) {\n  const tituloNorm = normalize(curso.TITULO);\n  const encontrados = tituloNorm\n    ? planilhas.filter(p => p.nome_normalizado.includes(tituloNorm))\n    : [];\n  if (encontrados.length === 0) {\n    console.log(`SEM ARQUIVO na pasta para o curso: ${curso.TITULO}`);\n    saida.push({ json: { ...base, curso, tema: curso.TITULO, arquivo: null, arquivo_encontrado: false } });\n  } else {\n    for (const arq of encontrados) {\n      saida.push({ json: { ...base, curso, tema: curso.TITULO,\n        arquivo: { id: arq.id, name: arq.name }, arquivo_encontrado: true } });\n    }\n  }\n}\n\nif (saida.length === 0) {\n  return [{ json: { ...base, curso: {}, tema: '', arquivo: null, arquivo_encontrado: false } }];\n}\nreturn saida;\n"
+      },
+      "id": "6cdaa036-5a27-4031-965f-d9c8485356dd",
+      "name": "Code - Casar Curso e Arquivo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8b0948c3-50c3-4c19-aa26-93db38edd0c3",
+      "name": "Loop - Cursos",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log('Processamento concluído: todos os cursos do dia alvo foram tratados.');\nreturn [{ json: { concluido: true } }];"
+      },
+      "id": "7780fcf1-c6a9-4df7-badc-e4e3a9652285",
+      "name": "Code - Fim",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.arquivo_encontrado }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1ae1fb63-49e9-4195-ba47-26f1283628a3",
+      "name": "IF - Tem Arquivo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $json.arquivo.id }}/values/FREQU%C3%8ANCIA%21A1%3AAZ1000?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "19a9ff18-d35e-4404-ac98-fda600d2c261",
+      "name": "HTTP - Ler Frequência",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2688,
+        112
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nIfyEUF469O4ic3a",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $input.first().json;\nconsole.log(`Arquivo não encontrado na pasta para o curso: ${ctx.tema}`);\nreturn [{ json: ctx }];"
+      },
+      "id": "0d3f7a38-5b14-4c94-a4f0-05a36470d9c3",
+      "name": "Code - Sem Arquivo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $('Loop - Cursos').first().json.arquivo.id }}/values/ID%21A1%3AZ20?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "bd5cd3ec-8b35-4033-ab71-00b8fbe729b6",
+      "name": "HTTP - Ler Aba ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2912,
+        112
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nIfyEUF469O4ic3a",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1) Confere se o dia alvo está entre as datas dos encontros da aba FREQUÊNCIA\n//    (linha 2, a partir da célula L2 — L2 = data de início do curso).\n// 2) Se conferir, extrai alunos (C3+ = NOME, D3+ = SCSEDUCA/e-mail) e\n//    professores (aba ID: D7 = nomes, D8 = e-mails).\nconst cursoCtx = $('Loop - Cursos').first().json;\nconst alvoYmd  = cursoCtx.alvo_ymd;\n\nconst respFreq = $('HTTP - Ler Frequência').first().json;\nconst respId   = $input.first().json;\nconst matrizFreq = respFreq?.values ?? respFreq?.body?.values ?? [];\nconst matrizId   = respId?.values ?? respId?.body?.values ?? [];\n\nfunction pad(v){ return String(v).padStart(2, '0'); }\nfunction parseData(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n  if (typeof raw === 'number') {\n    if (raw < 20000 || raw > 60000) return null; // fora disso não é data plausível\n    const ep = new Date(Date.UTC(1899, 11, 30));\n    const d  = new Date(ep.getTime() + raw * 86400000);\n    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;\n  }\n  const s  = String(raw).trim();\n  const br = s.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{2,4})/);\n  if (br) { let a = br[3]; if (a.length === 2) a = '20' + a; return `${a}-${pad(br[2])}-${pad(br[1])}`; }\n  const iso = s.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;\n  return null;\n}\n\n// Localiza a linha das datas dos encontros: fica na LINHA 2 (índice 1),\n// a partir da coluna L (índice 11). Por segurança, verifica também as\n// linhas 1 e 3, caso alguma planilha tenha estrutura levemente diferente.\nlet linhaDatas = null;\nfor (const li of [1, 0, 2]) {\n  const linha = matrizFreq[li] || [];\n  for (let col = 11; col < linha.length; col++) {\n    if (parseData(linha[col])) { linhaDatas = linha; break; }\n  }\n  if (linhaDatas) break;\n}\n\nconst datasEncontros = [];\nif (linhaDatas) {\n  for (let col = 11; col < linhaDatas.length; col++) {\n    const ymd = parseData(linhaDatas[col]);\n    if (ymd) datasEncontros.push(ymd);\n  }\n}\n\nconst dataConfere   = datasEncontros.includes(alvoYmd);\nconst dataInicioYmd = datasEncontros[0] || null; // L2 = data de início do curso\nconst dataInicioBr  = dataInicioYmd\n  ? `${dataInicioYmd.slice(8, 10)}/${dataInicioYmd.slice(5, 7)}/${dataInicioYmd.slice(0, 4)}`\n  : '';\n\nconsole.log(`[${cursoCtx.tema}] alvo=${alvoYmd} | datas encontros=${JSON.stringify(datasEncontros)} | confere=${dataConfere}`);\n\nif (!dataConfere) {\n  return [{ json: { ...cursoCtx, data_confere: false, alunos: [], professores: [], total_alunos: 0 } }];\n}\n\n// ── Alunos: a partir da linha 3 (índice 2) — C (índice 2)=NOME, D (índice 3)=SCSEDUCA\nconst alunos = [];\nfor (let i = 2; i < matrizFreq.length; i++) {\n  const l = matrizFreq[i] || [];\n  const nome  = (l[2] ?? '').toString().trim();\n  const email = (l[3] ?? '').toString().trim();\n  if (!email || !email.includes('@')) continue;\n  alunos.push({ nome, email });\n}\n\n// ── Professores: aba ID → D7 (índice [6][3]) = nomes, D8 (índice [7][3]) = e-mails\nconst nomesProf  = String((matrizId[6] || [])[3] || '').split(',').map(s => s.trim()).filter(Boolean);\nconst emailsProf = String((matrizId[7] || [])[3] || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);\nlet professores = nomesProf\n  .map((nome, i) => ({ nome, email: emailsProf[i] || '' }))\n  .filter(p => p.email);\n// fallback: há e-mails mas os nomes não casaram → usa FORMADORES da agenda\nif (professores.length === 0 && emailsProf.length > 0) {\n  professores = emailsProf.map(e => ({ nome: cursoCtx.curso.FORMADORES || 'Formador(a)', email: e }));\n}\n\nconst horario = [cursoCtx.curso.INICIO, cursoCtx.curso.TERMINO].filter(Boolean).join(' às ');\n\nreturn [{ json: {\n  ...cursoCtx,\n  data_confere: true,\n  alunos,\n  total_alunos: alunos.length,\n  professores,\n  horario,\n  data_inicio_curso: dataInicioBr || cursoCtx.alvo_ddmmyyyy\n}}];\n"
+      },
+      "id": "8f13c7da-8ad2-41d2-b7bf-fed4336894bf",
+      "name": "Code - Validar Data e Extrair",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3136,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.data_confere }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "50aabe79-d928-44e3-adcb-9efd9771920b",
+      "name": "IF - Data Confere?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta a fila de envio do curso atual: primeiro TODOS os alunos,\n// depois o(s) professor(es) — o loop de destinatários processa em ordem.\nconst ctx = $input.first().json;\nconst c   = ctx.curso || {};\n\nconst prefixo    = ctx.eh_amanha ? 'amanhã, ' : '';\nconst textoData  = `${prefixo}${ctx.dia_semana}, dia ${ctx.alvo_ddmmyyyy}`;\nconst profsTexto = (ctx.professores || []).map(p => p.nome).join(', ') || c.FORMADORES || '';\n\nconst base = {\n  TITULO: ctx.tema,\n  DATA_INICIO: ctx.data_inicio_curso || ctx.alvo_ddmmyyyy,\n  DATA_AULA: ctx.alvo_ddmmyyyy,\n  TEXTO_DATA: textoData,\n  HORARIO: ctx.horario || '',\n  ESPACO: c.ESPACO || '',\n  FORMATO: c.FORMATO || '',\n  PUBLICO_ALVO: c.PUBLICO_ALVO || '',\n  PROFESSORES_TEXTO: profsTexto,\n  TOTAL_ALUNOS: ctx.total_alunos || 0\n};\n\nconst fila = [];\nfor (const a of (ctx.alunos || []))      fila.push({ ...base, tipo: 'ALUNO',     NOME: a.nome, EMAIL: a.email });\nfor (const p of (ctx.professores || [])) fila.push({ ...base, tipo: 'PROFESSOR', NOME: p.nome, EMAIL: p.email });\n\nif (fila.length === 0) {\n  // Sem destinatários — item sentinela para o loop fechar e ir ao próximo curso\n  return [{ json: { ...base, tipo: 'VAZIO', NOME: '', EMAIL: '' } }];\n}\nreturn fila.map(f => ({ json: f }));\n"
+      },
+      "id": "32cae1c6-5f0e-410b-8dd8-117a5a395015",
+      "name": "Code - Montar Fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3584,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $input.first().json;\nconsole.log(`A data alvo não está na FREQUÊNCIA de: ${ctx.tema} (arquivo: ${ctx.arquivo?.name}). Curso ignorado.`);\nreturn [{ json: ctx }];"
+      },
+      "id": "3364b8e4-6d98-4fa0-996c-afa53a1fe30f",
+      "name": "Code - Sem Data na Freq",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3584,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "41f8d734-aba4-48cb-8c60-d0dea0868e9d",
+      "name": "Loop - Destinatários",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3808,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.tipo }}",
+              "rightValue": "ALUNO",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ddaef687-3866-45d4-8181-9627970ba572",
+      "name": "IF - É Aluno?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4032,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.tipo }}",
+              "rightValue": "PROFESSOR",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f2601d49-b65c-44ad-a1b2-a6e9cb1b9114",
+      "name": "IF - É Professor?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4256,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.EMAIL }}",
+        "subject": "=Lembrete: {{ $json.TITULO }} — {{ $json.TEXTO_DATA }}",
+        "emailType": "html",
+        "message": "=<p>Olá, <b>{{ $json.NOME }}</b>!</p><p>Passando para lembrar que <b>{{ $json.TEXTO_DATA }}</b> acontecerá o encontro do curso:</p><p><b>{{ $json.TITULO }}</b><br>📅 Data: {{ $json.DATA_AULA }}<br>🕒 Horário: {{ $json.HORARIO }}<br>📍 Espaço: {{ $json.ESPACO }}<br>🖥️ Formato: {{ $json.FORMATO }}<br>👩‍🏫 Formador(es): {{ $json.PROFESSORES_TEXTO }}</p><p>Contamos com a sua presença!</p><p>Atenciosamente,<br>CECAPE</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "aefc0d30-ea9a-4b89-8db0-075ec62a582d",
+      "name": "Gmail - Enviar Aluno",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4256,
+        16
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.EMAIL }}",
+        "subject": "=Lembrete de formação: {{ $json.TITULO }} — {{ $json.TEXTO_DATA }}",
+        "emailType": "html",
+        "message": "=<p>Olá, <b>{{ $json.NOME }}</b>!</p><p>Lembrete: <b>{{ $json.TEXTO_DATA }}</b> você tem o encontro do curso:</p><p><b>{{ $json.TITULO }}</b><br>📅 Data: {{ $json.DATA_AULA }}<br>🕒 Horário: {{ $json.HORARIO }}<br>📍 Espaço: {{ $json.ESPACO }}<br>🖥️ Formato: {{ $json.FORMATO }}</p><p>Os(as) <b>{{ $json.TOTAL_ALUNOS }}</b> cursistas inscritos(as) já foram notificados(as) por e-mail.</p><p>Atenciosamente,<br>CECAPE</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "6f9cdaf0-1d19-4d4b-84d4-814519a04a48",
+      "name": "Gmail - Enviar Professor",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4480,
+        208
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "11ecc4hdGNPvRj0wlE3F4UWVrJWNUvCqmlR2bGyPfaLk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Data de início do curso": "={{ $json.DATA_INICIO }}",
+            "Nome do curso": "={{ $json.TITULO }}",
+            "Nome do(s) formador(es)": "={{ $json.PROFESSORES_TEXTO }}",
+            "Data da aula": "={{ $json.DATA_AULA }}",
+            "Nome do aluno": "={{ $json.NOME }}",
+            "E-mail do aluno": "={{ $json.EMAIL }}",
+            "Status": "Enviado"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Data de início do curso",
+              "displayName": "Data de início do curso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nome do curso",
+              "displayName": "Nome do curso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nome do(s) formador(es)",
+              "displayName": "Nome do(s) formador(es)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Data da aula",
+              "displayName": "Data da aula",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nome do aluno",
+              "displayName": "Nome do aluno",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "E-mail do aluno",
+              "displayName": "E-mail do aluno",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d8bea6a6-7c20-480f-a915-e930e7dd6d3f",
+      "name": "Sheets - Controle Aluno",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        4480,
+        16
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nIfyEUF469O4ic3a",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "11ecc4hdGNPvRj0wlE3F4UWVrJWNUvCqmlR2bGyPfaLk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Data de início do curso": "={{ $json.DATA_INICIO }}",
+            "Nome do curso": "={{ $json.TITULO }}",
+            "Nome do(s) formador(es)": "={{ $json.PROFESSORES_TEXTO }}",
+            "Data da aula": "={{ $json.DATA_AULA }}",
+            "Nome do aluno": "={{ $json.NOME }}",
+            "E-mail do aluno": "={{ $json.EMAIL }}",
+            "Status": "Enviado (Formador)"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Data de início do curso",
+              "displayName": "Data de início do curso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nome do curso",
+              "displayName": "Nome do curso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nome do(s) formador(es)",
+              "displayName": "Nome do(s) formador(es)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Data da aula",
+              "displayName": "Data da aula",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nome do aluno",
+              "displayName": "Nome do aluno",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "E-mail do aluno",
+              "displayName": "E-mail do aluno",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f3b6cc51-2cf2-41e9-b86f-022acc5c5336",
+      "name": "Sheets - Controle Professor",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        4704,
+        208
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nIfyEUF469O4ic3a",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "continueOnFail": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code - Data Alvo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger - Diário": {
+      "main": [
+        [
+          {
+            "node": "Code - Data Alvo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Data Alvo": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Metadados Agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Metadados Agenda": {
+      "main": [
+        [
+          {
+            "node": "Code - Escolher Aba do Mês",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Escolher Aba do Mês": {
+      "main": [
+        [
+          {
+            "node": "IF - Aba Encontrada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Aba Encontrada?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Ler Agenda do Mês",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Sem Aba do Mês",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Ler Agenda do Mês": {
+      "main": [
+        [
+          {
+            "node": "Code - Cursos do Dia Alvo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Cursos do Dia Alvo": {
+      "main": [
+        [
+          {
+            "node": "IF - Tem Curso?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Tem Curso?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Listar Arquivos da Pasta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Sem Curso no Dia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Listar Arquivos da Pasta": {
+      "main": [
+        [
+          {
+            "node": "Code - Casar Curso e Arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Casar Curso e Arquivo": {
+      "main": [
+        [
+          {
+            "node": "Loop - Cursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop - Cursos": {
+      "main": [
+        [
+          {
+            "node": "Code - Fim",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - Tem Arquivo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Tem Arquivo?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Ler Frequência",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Sem Arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Sem Arquivo": {
+      "main": [
+        [
+          {
+            "node": "Loop - Cursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Ler Frequência": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Ler Aba ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Ler Aba ID": {
+      "main": [
+        [
+          {
+            "node": "Code - Validar Data e Extrair",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Validar Data e Extrair": {
+      "main": [
+        [
+          {
+            "node": "IF - Data Confere?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Data Confere?": {
+      "main": [
+        [
+          {
+            "node": "Code - Montar Fila",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Sem Data na Freq",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Sem Data na Freq": {
+      "main": [
+        [
+          {
+            "node": "Loop - Cursos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Montar Fila": {
+      "main": [
+        [
+          {
+            "node": "Loop - Destinatários",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop - Destinatários": {
+      "main": [
+        [
+          {
+            "node": "Loop - Cursos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - É Aluno?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - É Aluno?": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Enviar Aluno",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - É Professor?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - É Professor?": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Enviar Professor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop - Destinatários",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Enviar Aluno": {
+      "main": [
+        [
+          {
+            "node": "Sheets - Controle Aluno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Enviar Professor": {
+      "main": [
+        [
+          {
+            "node": "Sheets - Controle Professor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets - Controle Aluno": {
+      "main": [
+        [
+          {
+            "node": "Loop - Destinatários",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets - Controle Professor": {
+      "main": [
+        [
+          {
+            "node": "Loop - Destinatários",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "9064fe32635d2fcaca845aac95e526c58baa32ac68be71412291cb0f1d193974"
+  },
+  "tags": []
+}
