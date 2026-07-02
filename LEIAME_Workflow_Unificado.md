@@ -48,7 +48,11 @@ Os três problemas foram corrigidos no workflow novo.
    A coluna A pode conter **só o dia** (`6` ou `06`), **dia/mês** (`6/7`,
    `06/07`) ou a **data completa** (`06/07/2026`) — todos os formatos são
    reconhecidos, já que a aba é do próprio mês.
-5. **Lista os arquivos da pasta** do Drive (`1-qF8Yh0oIXE8VJwypPjFkcjET1YCVmya`).
+5. **Lista os arquivos da pasta** do Drive (`1-qF8Yh0oIXE8VJwypPjFkcjET1YCVmya`),
+   incluindo os que estiverem dentro de **subpastas** (1 nível — ex.: pasta do
+   dia, MANHÃ/TARDE). O log de execução mostra quantos itens/arquivos foram
+   encontrados e, quando um título não casa, lista os nomes disponíveis para
+   facilitar o diagnóstico.
    O prefixo `AAAA MM DD ` (data + espaço) do nome do arquivo é ignorado e o
    **TÍTULO** precisa estar **contido** no restante do nome (comparação sem
    acentos, sem pontuação e sem diferenciar maiúsculas). Se o título casar com

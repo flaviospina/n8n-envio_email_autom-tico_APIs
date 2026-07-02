@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {},
-      "id": "f0a40caa-52dc-4f2d-8ff1-ca2ce80e7817",
+      "id": "d00546cb-21f3-407a-b601-61b0126d4edc",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -24,7 +24,7 @@
           ]
         }
       },
-      "id": "e42febdc-be9e-46f3-9c5e-2b97dd28798f",
+      "id": "94e03afa-7ec3-4877-98f7-8a47055a7827",
       "name": "Schedule Trigger - Diário",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -37,7 +37,7 @@
       "parameters": {
         "jsCode": "// ─────────────────────────────────────────────────────────────────────────────\n// CONFIGURAÇÃO\n// OFFSET_DIAS = 1  → verifica o DIA SEGUINTE à data da execução (produção)\n// Para testar outra data, mude o valor (ex.: 3 = daqui a 3 dias)\n//\n// MODO_TESTE = true  → NÃO envia e-mail (só simula e registra no controle\n//                      com status \"SIMULAÇÃO\")\n// MODO_TESTE = false → envia os e-mails de verdade (produção)\n// ─────────────────────────────────────────────────────────────────────────────\nconst OFFSET_DIAS = 1;\nconst MODO_TESTE  = true;\n\nconst tz = 'America/Sao_Paulo';\nconst agora = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));\nfunction pad(v){ return String(v).padStart(2, '0'); }\n\nconst alvo = new Date(agora);\nalvo.setDate(alvo.getDate() + OFFSET_DIAS);\n\nconst yyyy = alvo.getFullYear();\nconst mm   = pad(alvo.getMonth() + 1);\nconst dd   = pad(alvo.getDate());\n\nconst mesNome   = alvo.toLocaleDateString('pt-BR', { timeZone: tz, month: 'long' });\nconst diaSemana = alvo.toLocaleDateString('pt-BR', { timeZone: tz, weekday: 'long' });\n\nfunction normalize(s = '') {\n  return String(s).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\n}\n\nreturn [{ json: {\n  offset_dias: OFFSET_DIAS,\n  modo_teste: MODO_TESTE === true,\n  eh_amanha: OFFSET_DIAS === 1,\n  alvo_ymd: `${yyyy}-${mm}-${dd}`,\n  alvo_ddmmyyyy: `${dd}/${mm}/${yyyy}`,\n  dd, mm, yyyy,\n  dia_semana: diaSemana,\n  mes_nome: mesNome.toUpperCase(),\n  mes_normalizado: normalize(mesNome),\n  ano: String(yyyy),\n  hoje_ymd: `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}-${pad(agora.getDate())}`\n}}];\n"
       },
-      "id": "b120b8b1-5f0f-4388-8cfc-64a4f4219db1",
+      "id": "331a6d05-7ddf-46dd-bf29-9c587c65ea86",
       "name": "Code - Data Alvo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -59,7 +59,7 @@
           }
         }
       },
-      "id": "f6e37472-fce8-4f38-b41c-f88418dca663",
+      "id": "7b8769a3-8cde-4a7e-bf7b-918ed7a07071",
       "name": "HTTP - Metadados Agenda",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -78,7 +78,7 @@
       "parameters": {
         "jsCode": "// Escolhe a aba (guia) do mês do dia alvo na planilha de agenda.\n// Aceita nomes como \"JULHO\", \"Julho 2026\", \"julho/26\" etc. (ignora acentos/caixa).\nconst ctx  = $('Code - Data Alvo').first().json;\nconst resp = $input.first().json;\nconst sheets = resp.sheets ?? resp.body?.sheets ?? [];\n\nfunction normalize(s = '') {\n  return String(s).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\n}\n\nconst mes = ctx.mes_normalizado; // ex.: \"julho\"\nconst ano = ctx.ano;             // ex.: \"2026\"\n\nlet aba = null;\n// 1ª preferência: aba que contém o mês E o ano; 2ª: aba que contém só o mês\nfor (const s of sheets) {\n  const t = normalize(s.properties?.title || '');\n  if (t.includes(mes) && t.includes(ano)) { aba = s.properties.title; break; }\n}\nif (!aba) {\n  for (const s of sheets) {\n    const t = normalize(s.properties?.title || '');\n    if (t.includes(mes)) { aba = s.properties.title; break; }\n  }\n}\n\nreturn [{ json: {\n  ...ctx,\n  aba,\n  aba_encontrada: !!aba,\n  abas_disponiveis: sheets.map(s => s.properties?.title)\n}}];\n"
       },
-      "id": "6f52db31-1f8e-41a0-8eba-ed036628cd37",
+      "id": "4ca01b22-2c63-4bbf-b6ff-35811d999406",
       "name": "Code - Escolher Aba do Mês",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -111,7 +111,7 @@
         },
         "options": {}
       },
-      "id": "dac1465c-c1ab-4c90-9e3c-0808d9d6ad19",
+      "id": "8d1efe9c-c221-4403-b088-80a412037234",
       "name": "IF - Aba Encontrada?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -133,7 +133,7 @@
           }
         }
       },
-      "id": "64f1361f-1ef8-4396-9d59-ac9efb1f2fa3",
+      "id": "52380f58-8c8e-4a84-be06-69a1bd1a32b3",
       "name": "HTTP - Ler Agenda do Mês",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -152,7 +152,7 @@
       "parameters": {
         "jsCode": "const c = $input.first().json;\nconsole.log(`Aba do mês não encontrada na agenda. Mês: ${c.mes_nome}. Abas disponíveis: ${JSON.stringify(c.abas_disponiveis)}`);\nreturn [];"
       },
-      "id": "7bf2240d-e101-42c5-97ec-6032ce959d17",
+      "id": "27583e22-b0c0-43b7-b031-19624b932385",
       "name": "Code - Sem Aba do Mês",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -165,7 +165,7 @@
       "parameters": {
         "jsCode": "// Filtra na agenda do mês as linhas cuja coluna A (DATA) é o dia alvo.\n// Colunas: A=DATA B=INÍCIO C=TÉRMINO D=DIA DA SEMANA E=ESPAÇO F=FORMADORES\n//          G=TÍTULO H=ETAPAS I=COMPONENTE CURRICULAR J=PÚBLICO-ALVO\n//          K=FORMATO L=VAGAS M=DIVULGAR N=GOOGLE SALA DE AULA\nconst ctx  = $('Code - Escolher Aba do Mês').first().json;\nconst resp = $input.first().json;\nconst matriz = resp.values ?? resp.body?.values ?? [];\n\nfunction pad(v){ return String(v).padStart(2, '0'); }\nfunction parseData(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n  if (typeof raw === 'number') {\n    if (raw < 20000 || raw > 60000) return null; // fora disso não é data plausível\n    const ep = new Date(Date.UTC(1899, 11, 30));\n    const d  = new Date(ep.getTime() + raw * 86400000);\n    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;\n  }\n  const s  = String(raw).trim();\n  const br = s.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{2,4})/);\n  if (br) { let a = br[3]; if (a.length === 2) a = '20' + a; return `${a}-${pad(br[2])}-${pad(br[1])}`; }\n  const iso = s.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;\n  return null;\n}\nfunction txt(v){ return (v ?? '').toString().trim(); }\n\n// A coluna A (DATA) pode vir como data completa (\"06/07/2026\"), como\n// dia/mês (\"06/07\" ou \"6/7\") ou apenas o DIA do mês (\"6\" ou \"06\") — a aba\n// já é do mês corrente, então o dia sozinho é suficiente.\nfunction ehDiaAlvo(raw) {\n  if (raw === null || raw === undefined || raw === '') return false;\n  const full = parseData(raw);\n  if (full) return full === ctx.alvo_ymd;\n  const s = String(raw).trim();\n  const soDia = s.match(/^(\\d{1,2})$/);             // ex.: \"6\"\n  if (soDia) return Number(soDia[1]) === Number(ctx.dd);\n  const diaMes = s.match(/^(\\d{1,2})\\/(\\d{1,2})$/); // ex.: \"6/7\" ou \"06/07\"\n  if (diaMes) return Number(diaMes[1]) === Number(ctx.dd)\n           && Number(diaMes[2]) === Number(ctx.mm);\n  return false;\n}\n\nconst cursos = [];\nfor (const linha of matriz) {\n  const l = linha || [];\n  if (!ehDiaAlvo(l[0])) continue;\n  const titulo = txt(l[6]);\n  if (!titulo) continue;\n  cursos.push({\n    DATA: txt(l[0]),\n    INICIO: txt(l[1]),\n    TERMINO: txt(l[2]),\n    DIA_SEMANA: txt(l[3]),\n    ESPACO: txt(l[4]),\n    FORMADORES: txt(l[5]),\n    TITULO: titulo,\n    ETAPAS: txt(l[7]),\n    COMPONENTE_CURRICULAR: txt(l[8]),\n    PUBLICO_ALVO: txt(l[9]),\n    FORMATO: txt(l[10]),\n    VAGAS: txt(l[11]),\n    DIVULGAR: txt(l[12]),\n    GOOGLE_SALA_DE_AULA: txt(l[13])\n  });\n}\n\nconsole.log(`Aba \"${ctx.aba}\" — cursos em ${ctx.alvo_ymd}: ${cursos.length}`);\nreturn [{ json: { ...ctx, cursos, total_cursos: cursos.length, tem_curso: cursos.length > 0 } }];\n"
       },
-      "id": "a5280690-0358-4a08-940a-cec320786f9b",
+      "id": "a280dbd1-0577-46a7-a7ae-b14c756d7b8c",
       "name": "Code - Cursos do Dia Alvo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -198,7 +198,7 @@
         },
         "options": {}
       },
-      "id": "28e8be73-1d19-4a9d-b53a-2e70391bc7ba",
+      "id": "bd5653a7-0d4f-4e63-8cf4-ac3579273c29",
       "name": "IF - Tem Curso?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -220,7 +220,7 @@
           }
         }
       },
-      "id": "c22e5969-7af0-435b-9a4d-d08965dfba08",
+      "id": "3cab7d1a-4436-4b24-b92b-dd6511482e96",
       "name": "HTTP - Listar Arquivos da Pasta",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -239,7 +239,7 @@
       "parameters": {
         "jsCode": "const c = $input.first().json;\nconsole.log(`Nenhum curso agendado para ${c.alvo_ddmmyyyy} (${c.dia_semana}). Nada a enviar.`);\nreturn [];"
       },
-      "id": "8beff4f5-584e-4d4c-88eb-2e513f500dd8",
+      "id": "cca8cee8-c2cf-4df2-a3ab-f58458405032",
       "name": "Code - Sem Curso no Dia",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -250,10 +250,10 @@
     },
     {
       "parameters": {
-        "jsCode": "// Casa cada curso do dia alvo com o(s) arquivo(s) da pasta do Drive.\n// Os arquivos começam com \"AAAA MM DD \" (data de início do curso) — esse\n// prefixo é ignorado e o TÍTULO precisa estar CONTIDO no restante do nome.\n// Se um título casar com mais de um arquivo, todos seguem no fluxo: a\n// verificação da data na aba FREQUÊNCIA decide qual(is) vale(m).\nconst ctx  = $('Code - Cursos do Dia Alvo').first().json;\nconst resp = $input.first().json;\nconst files = resp.files ?? resp.body?.files ?? [];\n\nfunction normalize(s = '') {\n  return String(s || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, ' ').replace(/\\s+/g, ' ').trim();\n}\nfunction semPrefixoData(nome) {\n  const m = String(nome || '').match(/^\\d{4}\\s+\\d{2}\\s+\\d{2}\\s+(.*)$/);\n  return m ? m[1] : String(nome || '');\n}\n\nconst planilhas = files\n  .filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && f.name)\n  .map(f => ({ id: f.id, name: f.name, nome_normalizado: normalize(semPrefixoData(f.name)) }));\n\nconst base = {\n  alvo_ymd: ctx.alvo_ymd,\n  alvo_ddmmyyyy: ctx.alvo_ddmmyyyy,\n  dia_semana: ctx.dia_semana,\n  eh_amanha: ctx.eh_amanha,\n  modo_teste: ctx.modo_teste === true\n};\n\nconst saida = [];\nfor (const curso of ctx.cursos) {\n  const tituloNorm = normalize(curso.TITULO);\n  const encontrados = tituloNorm\n    ? planilhas.filter(p => p.nome_normalizado.includes(tituloNorm))\n    : [];\n  if (encontrados.length === 0) {\n    console.log(`SEM ARQUIVO na pasta para o curso: ${curso.TITULO}`);\n    saida.push({ json: { ...base, curso, tema: curso.TITULO, arquivo: null, arquivo_encontrado: false } });\n  } else {\n    for (const arq of encontrados) {\n      saida.push({ json: { ...base, curso, tema: curso.TITULO,\n        arquivo: { id: arq.id, name: arq.name }, arquivo_encontrado: true } });\n    }\n  }\n}\n\nif (saida.length === 0) {\n  return [{ json: { ...base, curso: {}, tema: '', arquivo: null, arquivo_encontrado: false } }];\n}\nreturn saida;\n"
+        "jsCode": "// Recebe a listagem da pasta raiz do Drive.\n// Emite cada item (arquivo ou subpasta) para o próximo nível de listagem.\n// Também registra diagnóstico no log (erros de permissão, pasta vazia etc.).\nconst resp = $input.first().json;\n\nif (resp.error) {\n  console.log(`ERRO ao listar a pasta no Drive: ${JSON.stringify(resp.error)}`);\n}\n\nconst itens = resp.files ?? resp.body?.files ?? [];\nconst subpastas = itens.filter(i => i.mimeType === 'application/vnd.google-apps.folder');\nconsole.log(`Pasta raiz: ${itens.length} itens (${subpastas.length} subpastas, ${itens.length - subpastas.length} arquivos)`);\n\nif (itens.length === 0) {\n  // Item sentinela para o fluxo continuar até o diagnóstico final\n  return [{ json: { _vazio: true, id: '', name: '', mimeType: '' } }];\n}\nreturn itens.map(i => ({ json: i }));\n"
       },
-      "id": "404ed4c4-7166-4ec8-b030-8ea72e9b7492",
-      "name": "Code - Casar Curso e Arquivo",
+      "id": "08bbcab7-3b2d-43dd-a98f-83033a116af4",
+      "name": "Code - Itens da Pasta",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -263,14 +263,56 @@
     },
     {
       "parameters": {
+        "url": "=https://www.googleapis.com/drive/v3/files?q=%27{{ $json.id }}%27+in+parents+and+trashed%3Dfalse&fields=files(id%2Cname%2CmimeType)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "894e1a7b-c7bb-4a02-865b-e2c0d2827394",
+      "name": "HTTP - Listar Subpastas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2240,
+        112
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "wS6KN5d9PVC5ao2X",
+          "name": "Google Drive account 2"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta os arquivos da pasta raiz (nível 1) com os das subpastas (nível 2)\n// e casa cada curso do dia alvo com o(s) arquivo(s) correspondente(s).\n// Os arquivos começam com \"AAAA MM DD \" (data de início do curso) — esse\n// prefixo é ignorado e o TÍTULO precisa estar CONTIDO no restante do nome.\n// Se um título casar com mais de um arquivo, todos seguem no fluxo: a\n// verificação da data na aba FREQUÊNCIA decide qual(is) vale(m).\nconst ctx = $('Code - Cursos do Dia Alvo').first().json;\n\n// Arquivos que estavam soltos na raiz da pasta\nconst arquivosBrutos = [];\nfor (const item of $('Code - Itens da Pasta').all()) {\n  const it = item.json;\n  if (it && it.id && it.mimeType && it.mimeType !== 'application/vnd.google-apps.folder') {\n    arquivosBrutos.push(it);\n  }\n}\n// Arquivos vindos das subpastas (respostas do HTTP - Listar Subpastas)\nfor (const item of $input.all()) {\n  const r = item.json;\n  if (r && r.error) { console.log(`Aviso: falha ao listar uma subpasta: ${JSON.stringify(r.error).slice(0, 300)}`); continue; }\n  const fs2 = r?.files ?? r?.body?.files ?? [];\n  for (const f of fs2) {\n    if (f.mimeType !== 'application/vnd.google-apps.folder') arquivosBrutos.push(f);\n  }\n}\n\n// Remove duplicados (mesmo id)\nconst vistos = new Set();\nconst arquivos = arquivosBrutos.filter(f => {\n  if (!f.id || vistos.has(f.id)) return false;\n  vistos.add(f.id);\n  return true;\n});\n\nfunction normalize(s = '') {\n  return String(s || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, ' ').replace(/\\s+/g, ' ').trim();\n}\nfunction semPrefixoData(nome) {\n  const m = String(nome || '').match(/^\\d{4}\\s+\\d{2}\\s+\\d{2}\\s+(.*)$/);\n  return m ? m[1] : String(nome || '');\n}\n\nconst planilhas = arquivos\n  .map(f => ({ id: f.id, name: f.name, nome_normalizado: normalize(semPrefixoData(f.name)) }));\n\nconsole.log(`Total de arquivos encontrados (raiz + subpastas): ${planilhas.length}`);\n\nconst base = {\n  alvo_ymd: ctx.alvo_ymd,\n  alvo_ddmmyyyy: ctx.alvo_ddmmyyyy,\n  dia_semana: ctx.dia_semana,\n  eh_amanha: ctx.eh_amanha,\n  modo_teste: ctx.modo_teste === true\n};\n\nconst saida = [];\nfor (const curso of ctx.cursos) {\n  const tituloNorm = normalize(curso.TITULO);\n  const encontrados = tituloNorm\n    ? planilhas.filter(p => p.nome_normalizado.includes(tituloNorm))\n    : [];\n  if (encontrados.length === 0) {\n    console.log(`SEM ARQUIVO para o curso: \"${curso.TITULO}\"`);\n    console.log(`  (título normalizado: \"${tituloNorm}\")`);\n    const amostra = planilhas.slice(0, 30).map(p => p.name);\n    console.log(`  Arquivos disponíveis (até 30): ${JSON.stringify(amostra)}`);\n    saida.push({ json: { ...base, curso, tema: curso.TITULO, arquivo: null, arquivo_encontrado: false,\n      total_arquivos_pasta: planilhas.length } });\n  } else {\n    for (const arq of encontrados) {\n      console.log(`Curso \"${curso.TITULO}\" → arquivo \"${arq.name}\"`);\n      saida.push({ json: { ...base, curso, tema: curso.TITULO,\n        arquivo: { id: arq.id, name: arq.name }, arquivo_encontrado: true,\n        total_arquivos_pasta: planilhas.length } });\n    }\n  }\n}\n\nif (saida.length === 0) {\n  return [{ json: { ...base, curso: {}, tema: '', arquivo: null, arquivo_encontrado: false,\n    total_arquivos_pasta: planilhas.length } }];\n}\nreturn saida;\n"
+      },
+      "id": "b56d758c-5e50-469b-8a9f-5cbe547e48d1",
+      "name": "Code - Casar Curso e Arquivo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        112
+      ]
+    },
+    {
+      "parameters": {
         "options": {}
       },
-      "id": "4d93b359-6027-43f7-bf5e-aff81b9d3384",
+      "id": "64fbb99a-531f-411a-9cb4-7328a293b1f0",
       "name": "Loop - Cursos",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        2240,
+        2688,
         112
       ]
     },
@@ -278,12 +320,12 @@
       "parameters": {
         "jsCode": "console.log('Processamento concluído: todos os cursos do dia alvo foram tratados.');\nreturn [{ json: { concluido: true } }];"
       },
-      "id": "d969887c-aa68-4e26-a1d5-3f32a21d7138",
+      "id": "b99de400-546b-4d71-9a70-30524b247851",
       "name": "Code - Fim",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2464,
+        2912,
         -64
       ]
     },
@@ -311,12 +353,12 @@
         },
         "options": {}
       },
-      "id": "131549da-e8fb-4b0e-a10a-278bc5db4513",
+      "id": "1997de2d-7ae5-4730-9f2d-1a080d5c898d",
       "name": "IF - Tem Arquivo?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2464,
+        2912,
         208
       ]
     },
@@ -333,12 +375,12 @@
           }
         }
       },
-      "id": "2eb73cbf-5081-48ee-8e00-6314d65f377b",
+      "id": "1b2ff444-0ee2-48dc-9f89-1f51a4fc461b",
       "name": "HTTP - Ler Frequência",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2688,
+        3136,
         112
       ],
       "credentials": {
@@ -353,12 +395,12 @@
       "parameters": {
         "jsCode": "const ctx = $input.first().json;\nconsole.log(`Arquivo não encontrado na pasta para o curso: ${ctx.tema}`);\nreturn [{ json: ctx }];"
       },
-      "id": "530fb1fa-47e9-4083-a04f-41c61f9082fd",
+      "id": "8236df60-69fa-4e93-ac1c-ef50dbb9bc8d",
       "name": "Code - Sem Arquivo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2688,
+        3136,
         368
       ]
     },
@@ -375,12 +417,12 @@
           }
         }
       },
-      "id": "d5eab458-c997-4eb3-937c-b18b1d965fce",
+      "id": "cd00d45f-8692-4029-8ccd-4ef4217488f8",
       "name": "HTTP - Ler Aba ID",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2912,
+        3360,
         112
       ],
       "credentials": {
@@ -395,12 +437,12 @@
       "parameters": {
         "jsCode": "// 1) Confere se o dia alvo está entre as datas dos encontros da aba FREQUÊNCIA\n//    (linha 2, a partir da célula L2 — L2 = data de início do curso).\n// 2) Se conferir, extrai alunos (C3+ = NOME, D3+ = SCSEDUCA/e-mail) e\n//    professores (aba ID: D7 = nomes, D8 = e-mails).\nconst cursoCtx = $('Loop - Cursos').first().json;\nconst alvoYmd  = cursoCtx.alvo_ymd;\n\nconst respFreq = $('HTTP - Ler Frequência').first().json;\nconst respId   = $input.first().json;\nconst matrizFreq = respFreq?.values ?? respFreq?.body?.values ?? [];\nconst matrizId   = respId?.values ?? respId?.body?.values ?? [];\n\nfunction pad(v){ return String(v).padStart(2, '0'); }\nfunction parseData(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n  if (typeof raw === 'number') {\n    if (raw < 20000 || raw > 60000) return null; // fora disso não é data plausível\n    const ep = new Date(Date.UTC(1899, 11, 30));\n    const d  = new Date(ep.getTime() + raw * 86400000);\n    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;\n  }\n  const s  = String(raw).trim();\n  const br = s.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{2,4})/);\n  if (br) { let a = br[3]; if (a.length === 2) a = '20' + a; return `${a}-${pad(br[2])}-${pad(br[1])}`; }\n  const iso = s.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;\n  return null;\n}\n\n// Localiza a linha das datas dos encontros: fica na LINHA 2 (índice 1),\n// a partir da coluna L (índice 11). Por segurança, verifica também as\n// linhas 1 e 3, caso alguma planilha tenha estrutura levemente diferente.\nlet linhaDatas = null;\nfor (const li of [1, 0, 2]) {\n  const linha = matrizFreq[li] || [];\n  for (let col = 11; col < linha.length; col++) {\n    if (parseData(linha[col])) { linhaDatas = linha; break; }\n  }\n  if (linhaDatas) break;\n}\n\nconst datasEncontros = [];\nif (linhaDatas) {\n  for (let col = 11; col < linhaDatas.length; col++) {\n    const ymd = parseData(linhaDatas[col]);\n    if (ymd) datasEncontros.push(ymd);\n  }\n}\n\nconst dataConfere   = datasEncontros.includes(alvoYmd);\nconst dataInicioYmd = datasEncontros[0] || null; // L2 = data de início do curso\nconst dataInicioBr  = dataInicioYmd\n  ? `${dataInicioYmd.slice(8, 10)}/${dataInicioYmd.slice(5, 7)}/${dataInicioYmd.slice(0, 4)}`\n  : '';\n\nconsole.log(`[${cursoCtx.tema}] alvo=${alvoYmd} | datas encontros=${JSON.stringify(datasEncontros)} | confere=${dataConfere}`);\n\nif (!dataConfere) {\n  return [{ json: { ...cursoCtx, data_confere: false, alunos: [], professores: [], total_alunos: 0 } }];\n}\n\n// ── Alunos: a partir da linha 3 (índice 2) — C (índice 2)=NOME, D (índice 3)=SCSEDUCA\nconst alunos = [];\nfor (let i = 2; i < matrizFreq.length; i++) {\n  const l = matrizFreq[i] || [];\n  const nome  = (l[2] ?? '').toString().trim();\n  const email = (l[3] ?? '').toString().trim();\n  if (!email || !email.includes('@')) continue;\n  alunos.push({ nome, email });\n}\n\n// ── Professores: aba ID → D7 (índice [6][3]) = nomes, D8 (índice [7][3]) = e-mails\nconst nomesProf  = String((matrizId[6] || [])[3] || '').split(',').map(s => s.trim()).filter(Boolean);\nconst emailsProf = String((matrizId[7] || [])[3] || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);\nlet professores = nomesProf\n  .map((nome, i) => ({ nome, email: emailsProf[i] || '' }))\n  .filter(p => p.email);\n// fallback: há e-mails mas os nomes não casaram → usa FORMADORES da agenda\nif (professores.length === 0 && emailsProf.length > 0) {\n  professores = emailsProf.map(e => ({ nome: cursoCtx.curso.FORMADORES || 'Formador(a)', email: e }));\n}\n\nconst horario = [cursoCtx.curso.INICIO, cursoCtx.curso.TERMINO].filter(Boolean).join(' às ');\n\nreturn [{ json: {\n  ...cursoCtx,\n  data_confere: true,\n  alunos,\n  total_alunos: alunos.length,\n  professores,\n  horario,\n  data_inicio_curso: dataInicioBr || cursoCtx.alvo_ddmmyyyy\n}}];\n"
       },
-      "id": "5822961a-71fb-40c6-8f5e-a1a6efe1b9b2",
+      "id": "cf8d2bde-333a-437b-8e09-a660a74fab4e",
       "name": "Code - Validar Data e Extrair",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3136,
+        3584,
         112
       ]
     },
@@ -428,12 +470,12 @@
         },
         "options": {}
       },
-      "id": "7725fb0b-ed63-40e9-a8e8-fa156b1e15f2",
+      "id": "75ae3bb3-3a63-4233-913d-2e92fb7c4448",
       "name": "IF - Data Confere?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3360,
+        3808,
         112
       ]
     },
@@ -441,12 +483,12 @@
       "parameters": {
         "jsCode": "// Monta a fila de envio do curso atual: primeiro TODOS os alunos,\n// depois o(s) professor(es) — o loop de destinatários processa em ordem.\nconst ctx = $input.first().json;\nconst c   = ctx.curso || {};\n\nconst prefixo    = ctx.eh_amanha ? 'amanhã, ' : '';\nconst textoData  = `${prefixo}${ctx.dia_semana}, dia ${ctx.alvo_ddmmyyyy}`;\nconst profsTexto = (ctx.professores || []).map(p => p.nome).join(', ') || c.FORMADORES || '';\n\nconst base = {\n  MODO_TESTE: ctx.modo_teste === true,\n  TITULO: ctx.tema,\n  DATA_INICIO: ctx.data_inicio_curso || ctx.alvo_ddmmyyyy,\n  DATA_AULA: ctx.alvo_ddmmyyyy,\n  TEXTO_DATA: textoData,\n  HORARIO: ctx.horario || '',\n  ESPACO: c.ESPACO || '',\n  FORMATO: c.FORMATO || '',\n  PUBLICO_ALVO: c.PUBLICO_ALVO || '',\n  PROFESSORES_TEXTO: profsTexto,\n  TOTAL_ALUNOS: ctx.total_alunos || 0\n};\n\nconst fila = [];\nfor (const a of (ctx.alunos || []))      fila.push({ ...base, tipo: 'ALUNO',     NOME: a.nome, EMAIL: a.email });\nfor (const p of (ctx.professores || [])) fila.push({ ...base, tipo: 'PROFESSOR', NOME: p.nome, EMAIL: p.email });\n\nif (fila.length === 0) {\n  // Sem destinatários — item sentinela para o loop fechar e ir ao próximo curso\n  return [{ json: { ...base, tipo: 'VAZIO', NOME: '', EMAIL: '' } }];\n}\nreturn fila.map(f => ({ json: f }));\n"
       },
-      "id": "878dec58-17d2-45fd-88d5-71a870260f92",
+      "id": "d4242c2f-6f92-460c-a608-5f8d0aa0e1b2",
       "name": "Code - Montar Fila",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3584,
+        4032,
         16
       ]
     },
@@ -454,12 +496,12 @@
       "parameters": {
         "jsCode": "const ctx = $input.first().json;\nconsole.log(`A data alvo não está na FREQUÊNCIA de: ${ctx.tema} (arquivo: ${ctx.arquivo?.name}). Curso ignorado.`);\nreturn [{ json: ctx }];"
       },
-      "id": "ae7b75e3-45a8-4d81-838b-62780d65f610",
+      "id": "31fedcb3-bdb7-4657-9192-87968bd3f914",
       "name": "Code - Sem Data na Freq",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3584,
+        4032,
         272
       ]
     },
@@ -467,12 +509,12 @@
       "parameters": {
         "options": {}
       },
-      "id": "34be72c2-d4e7-431f-84e4-eb1da7f226d9",
+      "id": "fe59209b-2011-4a91-9265-fc187121c8ac",
       "name": "Loop - Destinatários",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        3808,
+        4256,
         16
       ]
     },
@@ -500,12 +542,12 @@
         },
         "options": {}
       },
-      "id": "7b943dfb-81a9-4167-b1f6-4c0213d8dfd5",
+      "id": "db31a086-13e9-4bf4-99f8-553372a888b1",
       "name": "IF - É Aluno?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        4032,
+        4480,
         112
       ]
     },
@@ -533,12 +575,12 @@
         },
         "options": {}
       },
-      "id": "7d23e95b-59e4-4164-88a6-5863f4c3621d",
+      "id": "473d976e-2fa7-46a2-a5af-d3c49d7deef5",
       "name": "IF - É Professor?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        4256,
+        4704,
         368
       ]
     },
@@ -566,12 +608,12 @@
         },
         "options": {}
       },
-      "id": "b6bb9eae-23be-4143-86c9-83384d9657c6",
+      "id": "03c2ef83-3655-4927-abf3-fed7436bcec1",
       "name": "IF - Modo Teste (Aluno)?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        4256,
+        4704,
         16
       ]
     },
@@ -599,12 +641,12 @@
         },
         "options": {}
       },
-      "id": "8428d233-89eb-4183-baca-d412fe31e65e",
+      "id": "496d5435-1f6b-4fa8-a0f9-095e53b06e06",
       "name": "IF - Modo Teste (Professor)?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        4480,
+        4928,
         368
       ]
     },
@@ -623,12 +665,12 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "3082e437-570d-4063-a143-f8f141155301",
+      "id": "f8b5977f-4aab-46b5-b594-ff6c557bc0cd",
       "name": "Noop - Simulação Aluno",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        4480,
+        4928,
         -80
       ]
     },
@@ -647,12 +689,12 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "b5f3f222-1195-40b7-aec5-15ba7b0e29d9",
+      "id": "91d74cc0-b25a-42df-bc5e-d1a784343f36",
       "name": "Noop - Simulação Professor",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        4704,
+        5152,
         288
       ]
     },
@@ -666,12 +708,12 @@
           "appendAttribution": false
         }
       },
-      "id": "b4961cc1-8269-4d30-a103-3e5db833f23e",
+      "id": "b665440d-e2df-4bb1-8ecb-c43354a7f1e0",
       "name": "Gmail - Enviar Aluno",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        4480,
+        4928,
         112
       ],
       "continueOnFail": true
@@ -686,12 +728,12 @@
           "appendAttribution": false
         }
       },
-      "id": "4c4ff45f-1868-42b1-8e3b-74aacdf970ac",
+      "id": "4268360f-6f1d-4aa9-8bba-ea5176e12164",
       "name": "Gmail - Enviar Professor",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        4704,
+        5152,
         448
       ],
       "continueOnFail": true
@@ -798,12 +840,12 @@
         },
         "options": {}
       },
-      "id": "c4b17b5d-2b83-436e-b21d-184ee0339e43",
+      "id": "74d5ce73-692f-4a74-a2b6-0f5444e98215",
       "name": "Sheets - Controle Aluno",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        4704,
+        5152,
         16
       ],
       "credentials": {
@@ -916,12 +958,12 @@
         },
         "options": {}
       },
-      "id": "d6e8b6db-698d-471c-aeca-e6ba8b7d0119",
+      "id": "13670f69-ce44-4fc5-98da-00f010fbdc03",
       "name": "Sheets - Controle Professor",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        4928,
+        5376,
         368
       ],
       "credentials": {
@@ -1049,6 +1091,28 @@
       ]
     },
     "HTTP - Listar Arquivos da Pasta": {
+      "main": [
+        [
+          {
+            "node": "Code - Itens da Pasta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Itens da Pasta": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Listar Subpastas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Listar Subpastas": {
       "main": [
         [
           {
