@@ -9,7 +9,7 @@
         -4600,
         300
       ],
-      "id": "67a6f5e5-a72c-414a-a088-bbd5f5fa5a4c",
+      "id": "c6719ed4-432e-41be-88c7-533df55d1650",
       "name": "When clicking ‘Execute workflow’"
     },
     {
@@ -29,7 +29,7 @@
         -4600,
         520
       ],
-      "id": "b96e9a08-988d-47a3-b155-e3494dd458ee",
+      "id": "fa805037-fba6-4a3f-8321-921939961e4f",
       "name": "Agendamento 09:00"
     },
     {
@@ -45,7 +45,7 @@
         -4660,
         -260
       ],
-      "id": "de318a61-d138-4927-9d85-9f16b5676937",
+      "id": "5dd18ded-914f-4371-901a-babc5bd431bd",
       "name": "Sticky Note - Instruções"
     },
     {
@@ -58,7 +58,7 @@
         -4380,
         400
       ],
-      "id": "0e0010b2-fcbf-4feb-b210-792c8cfedce5",
+      "id": "303f2b80-4e5a-4135-a781-e69d35139d1b",
       "name": "Config - Variáveis"
     },
     {
@@ -71,7 +71,7 @@
         -4160,
         400
       ],
-      "id": "8b828aa5-a050-42cc-b844-f5bab83ddee1",
+      "id": "ed59d15d-65e9-497c-8f42-f2cd120f2f2e",
       "name": "Preparar Data Alvo"
     },
     {
@@ -94,7 +94,7 @@
         -3940,
         300
       ],
-      "id": "49dd33a6-7342-46a7-927e-37db9ec0a0be",
+      "id": "05b33690-dde7-44f2-b648-e9e5cfdccb30",
       "name": "Sheets - Agenda Mês 1",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -123,7 +123,7 @@
         -3940,
         520
       ],
-      "id": "4b144924-3742-4154-91ec-9bbd34c5a756",
+      "id": "50e478bc-0de8-4af7-a435-5aa686722589",
       "name": "Sheets - Agenda Mês 2",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -140,7 +140,7 @@
         -3720,
         400
       ],
-      "id": "e394c231-6866-49c3-b1dd-cfb852df4799",
+      "id": "3bd2ca16-672b-41b9-b889-e3423b117419",
       "name": "Merge - Agenda Meses"
     },
     {
@@ -153,7 +153,7 @@
         -3500,
         400
       ],
-      "id": "71f58d0d-8f54-4ffb-9f6b-1fa74ad9abf1",
+      "id": "74c823bd-276f-4f18-9c26-11c057fded97",
       "name": "Code - Agenda Dia Seguinte"
     },
     {
@@ -179,7 +179,7 @@
         -3280,
         400
       ],
-      "id": "19eaf69d-a118-4e16-a81c-b6a6778f32e4",
+      "id": "b34b046d-c7a2-43b1-9303-d3ec90288468",
       "name": "Drive - Listar Diários",
       "credentials": {
         "googleDriveOAuth2Api": {
@@ -198,7 +198,7 @@
         -3060,
         400
       ],
-      "id": "5422002c-a658-43fe-b51b-a64f8674d882",
+      "id": "86c9d759-d368-40b8-afbb-1c39bcbd833e",
       "name": "Code - Preparar Diários"
     },
     {
@@ -214,7 +214,7 @@
         -2840,
         400
       ],
-      "id": "6e8ca929-da92-4f95-9a2d-e9cd85d8a084",
+      "id": "f3ae01fb-1b3c-4380-9b03-c53a253ff3ef",
       "name": "HTTP - Ler Datas (FREQUÊNCIA L2)",
       "onError": "continueRegularOutput",
       "alwaysOutputData": true,
@@ -235,7 +235,7 @@
         -2620,
         400
       ],
-      "id": "c33c22ab-f7b2-4ac8-a643-2b18190d7dd8",
+      "id": "b4fdd401-40cc-4cff-961d-0607a7981136",
       "name": "Code - Verificar Datas"
     },
     {
@@ -249,7 +249,7 @@
           },
           "conditions": [
             {
-              "id": "29a215a5-7d17-4e41-8c45-0b1d17237944",
+              "id": "6d08b561-0cef-4e5c-b32c-4091ce064a04",
               "leftValue": "={{ $json.TEM_CURSO }}",
               "rightValue": "",
               "operator": {
@@ -269,7 +269,7 @@
         -2400,
         400
       ],
-      "id": "00a70900-69ea-4081-bc6a-a0f76376f0ff",
+      "id": "cd0e2c7a-ea3a-454b-a680-3442eba2aa5a",
       "name": "IF - Tem Cursos no Dia Alvo?"
     },
     {
@@ -285,7 +285,7 @@
         -2180,
         480
       ],
-      "id": "d8a8d06a-69d3-459c-962c-e3aed514a66d",
+      "id": "58e42462-4d7a-4507-89d6-9c6282e54dd8",
       "name": "HTTP - Ler Alunos (FREQUÊNCIA C3:D)",
       "onError": "continueRegularOutput",
       "alwaysOutputData": true,
@@ -298,7 +298,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Monta UMA fila ordenada de envios:\n//   alunos do curso 1 -> formadores do curso 1 -> alunos do curso 2 -> ...\n// Assim o envio usa um ÚNICO loop, evitando o bug conhecido do n8n com\n// loops aninhados de Split In Batches (github.com/n8n-io/n8n/issues/23670).\n\nconst agenda = ($('Code - Agenda Dia Seguinte').first().json._agenda) || [];\n\n// Cursos com aula na data-alvo, na MESMA ordem em que entraram no nó HTTP.\nconst cursos = $('Code - Verificar Datas').all().map(i => i.json);\n\nfunction normalize(s = '') {\n  return String(s || '')\n    .normalize('NFD')\n    .replace(/[̀-ͯ]/g, '')\n    .toLowerCase()\n    .replace(/\\.(xlsx|xls|csv)$/i, '')\n    .replace(/[^\\p{L}\\p{N}]+/gu, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction scoreMatch(fileKey, agendaKey) {\n  if (!fileKey || !agendaKey) return 0;\n  if (fileKey === agendaKey) return 1000;\n  if (fileKey.includes(agendaKey) || agendaKey.includes(fileKey)) return 800;\n\n  const fileTokens = new Set(fileKey.split(' ').filter(Boolean));\n  const agendaTokens = new Set(agendaKey.split(' ').filter(Boolean));\n\n  let common = 0;\n  for (const t of fileTokens) {\n    if (agendaTokens.has(t)) common++;\n  }\n  if (!common) return 0;\n  return common * 10 - Math.abs(fileTokens.size - agendaTokens.size);\n}\n\nfunction formadoresDisplay(raw) {\n  return String(raw || '')\n    .replace(/\\r\\n?/g, '\\n')\n    .split('\\n')\n    .map(l => l\n      .replace(/^[-–•\\s]+/, '')\n      .replace(/\\s*[-–]\\s*[^\\s@]+@[^\\s@]+\\.[^\\s@]+\\s*$/i, '')\n      .replace(/<[^>]*>/g, '')\n      .trim())\n    .filter(Boolean)\n    .filter(l => !/^(formadores|professores)( externos)?:?$/i.test(l))\n    .join(', ');\n}\n\nfunction normalizeRawText(text = '') {\n  return String(text || '')\n    .replace(/\\\\r\\\\n/g, '\\n')\n    .replace(/\\\\n/g, '\\n')\n    .replace(/\\\\r/g, '\\n')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\r/g, '\\n')\n    .trim();\n}\n\nfunction splitLines(text = '') {\n  return normalizeRawText(text)\n    .split('\\n')\n    .map(v => v.trim())\n    .filter(Boolean);\n}\n\nfunction cleanLine(value = '') {\n  return String(value || '')\n    .replace(/^[-–•\\s]+/, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction isHeaderLine(s) {\n  const t = String(s || '').trim().toUpperCase();\n  return [\n    'FORMADORES:',\n    'FORMADORES',\n    'FORMADORES EXTERNOS:',\n    'FORMADORES EXTERNOS',\n    'PROFESSORES:',\n    'PROFESSORES',\n    'PROFESSORES EXTERNOS:',\n    'PROFESSORES EXTERNOS'\n  ].includes(t);\n}\n\nfunction parsePerson(rawLine) {\n  const value = cleanLine(rawLine);\n  if (!value || isHeaderLine(value)) return null;\n\n  let m = value.match(/^(.*?)\\s*-\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i);\n  if (m) {\n    return { nome: cleanLine(m[1]), email: m[2].trim().toLowerCase() };\n  }\n\n  m = value.match(/^(.*?)<\\s*([^>]+@[^>]+)\\s*>$/);\n  if (m) {\n    return { nome: cleanLine(m[1]) || m[2].trim(), email: m[2].trim().toLowerCase() };\n  }\n\n  m = value.match(/^([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i);\n  if (m) {\n    return { nome: m[1].trim(), email: m[1].trim().toLowerCase() };\n  }\n\n  return null;\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst fila = [];\n\nitems.forEach((item, idx) => {\n  const resp = item.json || {};\n  const info = cursos[idx] || {};\n  const dm = String(info.DATA_MATCH || '');\n\n  // ----- localizar o curso na agenda mensal (sala, horário, formadores) -----\n  let curso = null;\n  let bestScore = 0;\n\n  for (const a of agenda) {\n    const aKey = normalize(a['TÍTULO'] || a['TITULO'] || '');\n    let score = scoreMatch(info.course_key, aKey);\n    if (dm && a._data_ymd && dm === a._data_ymd.split('-').reverse().join('/')) score += 50;\n    else if (dm && a._data_dia && dm.slice(0, 2) === a._data_dia) score += 20;\n    if (score > bestScore) {\n      bestScore = score;\n      curso = a;\n    }\n  }\n\n  const encontrado = !!curso && bestScore >= 10;\n  const formadoresRaw = encontrado ? String(curso['FORMADORES'] ?? curso['PROFESSORES'] ?? '') : '';\n\n  const cursoInfo = {\n    spreadsheetId: info.spreadsheetId,\n    spreadsheetName: info.spreadsheetName,\n    curso_nome: info.curso_nome,\n    course_key: info.course_key,\n    DATA: dm || (encontrado ? String(curso['DATA'] ?? '') : ''),\n    'TÍTULO': encontrado && curso['TÍTULO'] ? curso['TÍTULO'] : info.curso_nome,\n    'ESPAÇO': encontrado ? (curso['ESPAÇO'] ?? curso['ESPACO'] ?? '') : '',\n    INICIO: encontrado ? (curso['INÍCIO'] ?? curso['INICIO'] ?? '') : '',\n    TERMINO: encontrado ? (curso['TÉRMINO'] ?? curso['TERMINO'] ?? '') : '',\n    ETAPAS: encontrado ? (curso['ETAPAS'] ?? '') : '',\n    FORMATO: encontrado ? (curso['FORMATO'] ?? '') : '',\n    'GOOGLE SALA DE AULA': encontrado ? (curso['GOOGLE SALA DE AULA'] ?? '') : '',\n    FORMADORES: formadoresDisplay(formadoresRaw),\n    CURSO_ENCONTRADO_NA_AGENDA: encontrado,\n    SCORE_AGENDA: bestScore\n  };\n\n  // ----- alunos: coluna C = nome, coluna D = e-mail (a partir da linha 3) -----\n  const rows = Array.isArray(resp.values) ? resp.values : [];\n  const seenAlunos = new Set();\n\n  for (const r of rows) {\n    const nome = String((r && r[0]) || '').trim();\n    const email = String((r && r[1]) || '').trim().toLowerCase();\n    if (!email || !emailRegex.test(email)) continue;\n    if (seenAlunos.has(email)) continue;\n    seenAlunos.add(email);\n\n    fila.push({\n      json: {\n        ...cursoInfo,\n        TIPO_ENVIO: 'ALUNO',\n        NOME: nome || email,\n        EMAIL_ALUNO: email\n      }\n    });\n  }\n\n  // ----- formadores do MESMO curso, logo após os alunos -----\n  const seenProf = new Set();\n\n  for (const linha of splitLines(formadoresRaw)) {\n    const p = parsePerson(linha);\n    if (!p || !p.email) continue;\n    if (seenProf.has(p.email)) continue;\n    seenProf.add(p.email);\n\n    fila.push({\n      json: {\n        ...cursoInfo,\n        TIPO_ENVIO: 'FORMADOR',\n        PROFESSOR_NOME: p.nome,\n        PROFESSOR_EMAIL: p.email,\n        HORARIO_INICIO: cursoInfo.INICIO || '',\n        HORARIO_FIM: cursoInfo.TERMINO || '',\n        TITULO_CURSO: cursoInfo['TÍTULO'] || info.curso_nome\n      }\n    });\n  }\n});\n\nif (!fila.length) {\n  return [{\n    json: {\n      TIPO_ENVIO: 'NENHUM',\n      _motivo: 'Cursos com aula na data-alvo foram encontrados, mas sem alunos/formadores com e-mail válido.'\n    }\n  }];\n}\n\nreturn fila.map((f, i) => ({ json: { ...f.json, ORDEM: i + 1, TOTAL_FILA: fila.length } }));"
+        "jsCode": "// Monta UMA fila ordenada de envios:\n//   alunos do curso 1 -> formadores do curso 1 -> alunos do curso 2 -> ...\n// Assim o envio usa um ÚNICO loop, evitando o bug conhecido do n8n com\n// loops aninhados de Split In Batches (github.com/n8n-io/n8n/issues/23670).\n\nconst agenda = ($('Code - Agenda Dia Seguinte').first().json._agenda) || [];\n\n// Cursos com aula na data-alvo, na MESMA ordem em que entraram no nó HTTP.\nconst cursos = $('Code - Verificar Datas').all().map(i => i.json);\n\nfunction normalize(s = '') {\n  return String(s || '')\n    .normalize('NFD')\n    .replace(/[̀-ͯ]/g, '')\n    .toLowerCase()\n    .replace(/\\.(xlsx|xls|csv)$/i, '')\n    .replace(/[^\\p{L}\\p{N}]+/gu, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction scoreMatch(fileKey, agendaKey) {\n  if (!fileKey || !agendaKey) return 0;\n  if (fileKey === agendaKey) return 1000;\n  if (fileKey.includes(agendaKey) || agendaKey.includes(fileKey)) return 800;\n\n  const fileTokens = new Set(fileKey.split(' ').filter(Boolean));\n  const agendaTokens = new Set(agendaKey.split(' ').filter(Boolean));\n\n  let common = 0;\n  for (const t of fileTokens) {\n    if (agendaTokens.has(t)) common++;\n  }\n  if (!common) return 0;\n  return common * 10 - Math.abs(fileTokens.size - agendaTokens.size);\n}\n\nfunction formadoresDisplay(raw) {\n  return String(raw || '')\n    .replace(/\\r\\n?/g, '\\n')\n    .split('\\n')\n    .map(l => l\n      .replace(/^[-–•\\s]+/, '')\n      .replace(/\\s*[-–]\\s*[^\\s@]+@[^\\s@]+\\.[^\\s@]+\\s*$/i, '')\n      .replace(/<[^>]*>/g, '')\n      .trim())\n    .filter(Boolean)\n    .filter(l => !/^(formadores|professores)( externos)?:?$/i.test(l))\n    .join(', ');\n}\n\nfunction normalizeRawText(text = '') {\n  return String(text || '')\n    .replace(/\\\\r\\\\n/g, '\\n')\n    .replace(/\\\\n/g, '\\n')\n    .replace(/\\\\r/g, '\\n')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\r/g, '\\n')\n    .trim();\n}\n\nfunction splitLines(text = '') {\n  return normalizeRawText(text)\n    .split('\\n')\n    .map(v => v.trim())\n    .filter(Boolean);\n}\n\nfunction cleanLine(value = '') {\n  return String(value || '')\n    .replace(/^[-–•\\s]+/, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction isHeaderLine(s) {\n  const t = String(s || '').trim().toUpperCase();\n  return [\n    'FORMADORES:',\n    'FORMADORES',\n    'FORMADORES EXTERNOS:',\n    'FORMADORES EXTERNOS',\n    'PROFESSORES:',\n    'PROFESSORES',\n    'PROFESSORES EXTERNOS:',\n    'PROFESSORES EXTERNOS'\n  ].includes(t);\n}\n\nfunction parsePerson(rawLine) {\n  const value = cleanLine(rawLine);\n  if (!value || isHeaderLine(value)) return null;\n\n  let m = value.match(/^(.*?)\\s*-\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i);\n  if (m) {\n    return { nome: cleanLine(m[1]), email: m[2].trim().toLowerCase() };\n  }\n\n  m = value.match(/^(.*?)<\\s*([^>]+@[^>]+)\\s*>$/);\n  if (m) {\n    return { nome: cleanLine(m[1]) || m[2].trim(), email: m[2].trim().toLowerCase() };\n  }\n\n  m = value.match(/^([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i);\n  if (m) {\n    return { nome: m[1].trim(), email: m[1].trim().toLowerCase() };\n  }\n\n  return null;\n}\n\n// ----- frases dinâmicas conforme a distância entre hoje e a data do curso -----\nconst hojeStr = $('Preparar Data Alvo').first().json.hoje; // DD/MM/AAAA\n\nfunction parseBR(s) {\n  const m = String(s || '').match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  return m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12, 0, 0) : null;\n}\n\nfunction capitalize(s) {\n  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;\n}\n\nfunction frasesDoDia(dataBR) {\n  if (!dataBR) {\n    return { DIA_SEMANA: '', FRASE_ABERTURA: 'Em breve', REF_DIA: 'do curso' };\n  }\n  const alvo = parseBR(dataBR);\n  const hoje = parseBR(hojeStr);\n  const weekday = alvo ? capitalize(alvo.toLocaleDateString('pt-BR', { weekday: 'long' })) : '';\n  const diff = (alvo && hoje) ? Math.round((alvo - hoje) / 86400000) : null;\n  const masculino = /sábado|domingo/i.test(weekday);\n\n  // FRASE_ABERTURA completa a frase: \"... teremos um compromisso importante no CECAPE!\"\n  // REF_DIA completa a frase: \"... a mensagem sobre o compromisso ...\"\n  if (diff === 0) {\n    return { DIA_SEMANA: weekday, FRASE_ABERTURA: `Hoje, ${weekday},`, REF_DIA: `de hoje (${weekday})` };\n  }\n  if (diff === 1) {\n    return { DIA_SEMANA: weekday, FRASE_ABERTURA: `Amanhã, ${weekday},`, REF_DIA: `de amanhã (${weekday})` };\n  }\n  if (diff !== null && diff > 1) {\n    return {\n      DIA_SEMANA: weekday,\n      FRASE_ABERTURA: masculino\n        ? `No próximo ${weekday}, dia ${dataBR},`\n        : `Na próxima ${weekday}, dia ${dataBR},`,\n      REF_DIA: masculino\n        ? `do próximo ${weekday} (${dataBR})`\n        : `da próxima ${weekday} (${dataBR})`\n    };\n  }\n  return { DIA_SEMANA: weekday, FRASE_ABERTURA: `No dia ${dataBR},`, REF_DIA: `do dia ${dataBR}` };\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst fila = [];\n\nitems.forEach((item, idx) => {\n  const resp = item.json || {};\n  const info = cursos[idx] || {};\n  const dm = String(info.DATA_MATCH || '');\n\n  // ----- localizar o curso na agenda mensal (sala, horário, formadores) -----\n  let curso = null;\n  let bestScore = 0;\n\n  for (const a of agenda) {\n    const aKey = normalize(a['TÍTULO'] || a['TITULO'] || '');\n    let score = scoreMatch(info.course_key, aKey);\n    if (dm && a._data_ymd && dm === a._data_ymd.split('-').reverse().join('/')) score += 50;\n    else if (dm && a._data_dia && dm.slice(0, 2) === a._data_dia) score += 20;\n    if (score > bestScore) {\n      bestScore = score;\n      curso = a;\n    }\n  }\n\n  const encontrado = !!curso && bestScore >= 10;\n  const formadoresRaw = encontrado ? String(curso['FORMADORES'] ?? curso['PROFESSORES'] ?? '') : '';\n\n  const cursoInfo = {\n    spreadsheetId: info.spreadsheetId,\n    spreadsheetName: info.spreadsheetName,\n    curso_nome: info.curso_nome,\n    course_key: info.course_key,\n    DATA: dm || (encontrado ? String(curso['DATA'] ?? '') : ''),\n    'TÍTULO': encontrado && curso['TÍTULO'] ? curso['TÍTULO'] : info.curso_nome,\n    'ESPAÇO': encontrado ? (curso['ESPAÇO'] ?? curso['ESPACO'] ?? '') : '',\n    INICIO: encontrado ? (curso['INÍCIO'] ?? curso['INICIO'] ?? '') : '',\n    TERMINO: encontrado ? (curso['TÉRMINO'] ?? curso['TERMINO'] ?? '') : '',\n    ETAPAS: encontrado ? (curso['ETAPAS'] ?? '') : '',\n    FORMATO: encontrado ? (curso['FORMATO'] ?? '') : '',\n    'GOOGLE SALA DE AULA': encontrado ? (curso['GOOGLE SALA DE AULA'] ?? '') : '',\n    FORMADORES: formadoresDisplay(formadoresRaw),\n    CURSO_ENCONTRADO_NA_AGENDA: encontrado,\n    SCORE_AGENDA: bestScore\n  };\n\n  Object.assign(cursoInfo, frasesDoDia(cursoInfo.DATA));\n\n  // ----- alunos: coluna C = nome, coluna D = e-mail (a partir da linha 3) -----\n  const rows = Array.isArray(resp.values) ? resp.values : [];\n  const seenAlunos = new Set();\n\n  for (const r of rows) {\n    const nome = String((r && r[0]) || '').trim();\n    const email = String((r && r[1]) || '').trim().toLowerCase();\n    if (!email || !emailRegex.test(email)) continue;\n    if (seenAlunos.has(email)) continue;\n    seenAlunos.add(email);\n\n    fila.push({\n      json: {\n        ...cursoInfo,\n        TIPO_ENVIO: 'ALUNO',\n        NOME: nome || email,\n        EMAIL_ALUNO: email\n      }\n    });\n  }\n\n  // ----- formadores do MESMO curso, logo após os alunos -----\n  const seenProf = new Set();\n\n  for (const linha of splitLines(formadoresRaw)) {\n    const p = parsePerson(linha);\n    if (!p || !p.email) continue;\n    if (seenProf.has(p.email)) continue;\n    seenProf.add(p.email);\n\n    fila.push({\n      json: {\n        ...cursoInfo,\n        TIPO_ENVIO: 'FORMADOR',\n        PROFESSOR_NOME: p.nome,\n        PROFESSOR_EMAIL: p.email,\n        HORARIO_INICIO: cursoInfo.INICIO || '',\n        HORARIO_FIM: cursoInfo.TERMINO || '',\n        TITULO_CURSO: cursoInfo['TÍTULO'] || info.curso_nome\n      }\n    });\n  }\n});\n\nif (!fila.length) {\n  return [{\n    json: {\n      TIPO_ENVIO: 'NENHUM',\n      _motivo: 'Cursos com aula na data-alvo foram encontrados, mas sem alunos/formadores com e-mail válido.'\n    }\n  }];\n}\n\nreturn fila.map((f, i) => ({ json: { ...f.json, ORDEM: i + 1, TOTAL_FILA: fila.length } }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -306,7 +306,7 @@
         -1960,
         480
       ],
-      "id": "aff3d91c-6e76-4d2d-a2ce-dd625c26e153",
+      "id": "d7ac0843-8cfb-47c3-950b-77a9922ee029",
       "name": "Code - Montar Fila de Envios"
     },
     {
@@ -319,7 +319,7 @@
         -1740,
         480
       ],
-      "id": "eaac4e29-07be-4a6c-bc57-006e967dba00",
+      "id": "cfc4cafc-f904-430b-a398-d44842735481",
       "name": "Loop Envios"
     },
     {
@@ -333,7 +333,7 @@
           },
           "conditions": [
             {
-              "id": "33ba028e-2afc-4f5d-aa49-7bac28fb8913",
+              "id": "5c7ec4f6-6948-4002-a8c8-c9a8df641965",
               "leftValue": "={{ $json.TIPO_ENVIO }}",
               "rightValue": "ALUNO",
               "operator": {
@@ -352,7 +352,7 @@
         -1520,
         560
       ],
-      "id": "127a56c0-ab6b-4028-8766-67e47bc3bed0",
+      "id": "197a2e9c-fa0a-4834-b1e5-c7dd5b2369e0",
       "name": "IF - Envio para Aluno?"
     },
     {
@@ -366,7 +366,7 @@
           },
           "conditions": [
             {
-              "id": "74a496c5-ae76-49ee-81e6-cadef82925ab",
+              "id": "de70a555-9a0a-45ad-ae4d-e5a95de80764",
               "leftValue": "={{ $json.TIPO_ENVIO }}",
               "rightValue": "FORMADOR",
               "operator": {
@@ -385,14 +385,14 @@
         -1300,
         700
       ],
-      "id": "06f3f600-b7c6-4df1-9dc4-661d6fdbc01f",
+      "id": "2e1388ea-b67c-4621-b278-6ad5eb0fd06b",
       "name": "IF - Envio para Formador?"
     },
     {
       "parameters": {
         "sendTo": "={{ $('Config - Variáveis').first().json.MODO_TESTE ? $('Config - Variáveis').first().json.EMAIL_TESTE : $json.EMAIL_ALUNO }}",
         "subject": "={{ ($('Config - Variáveis').first().json.MODO_TESTE ? '[TESTE p/ ' + $json.EMAIL_ALUNO + '] ' : '') + 'Aviso CECAPE • ' + $json['TÍTULO'] + ' • Dia ' + $json.DATA }}",
-        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; background-color: #28b1d4; margin: 0; padding: 20px; }\n    .container { width: 100%; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; }\n\n    .header { background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 4px solid #00accf; }\n    .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n    .header-table td { width: 50%; text-align: center; vertical-align: middle; padding: 10px; }\n\n    .header-table img { width: 100%; max-width: 180px; height: auto; display: inline-block; }\n\n    .content { padding: 35px; background-color: #ffffff; }\n    .card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 5px solid #00accf; margin: 20px 0; }\n\n    .info-row { margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }\n    .info-label { font-weight: bold; color: #00accf; text-transform: uppercase; font-size: 12px; display: block; }\n    .info-value { color: #333; font-size: 16px; }\n\n    h2 { color: #00accf; margin-top: 0; font-size: 22px; text-align: center; }\n\n    .footer { background-color: #00accf; color: #ffffff; text-align: center; padding: 20px; font-size: 13px; font-weight: 300; }\n\n    .no-reply {\n      margin-top: 20px;\n      padding: 15px;\n      background-color: #fff3cd;\n      border: 1px solid #ffeeba;\n      border-radius: 8px;\n      color: #856404;\n      font-size: 13px;\n      text-align: center;\n    }\n\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <table class=\"header-table\">\n        <tr>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-seeduc.png\" alt=\"SEEDUC\"></td>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-cecape.png\" alt=\"CECAPE\"></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"content\">\n      <h2>Olá, <strong>{{ $json[\"NOME\"] }}</strong>!</h2>\n      <p>\n        Hoje teremos um compromisso importante no CECAPE!\n        <br>\n        Seguem os dados de identificação do seu curso:\n      </p>\n\n      <div class=\"card\">\n        <p><span class=\"info-label\">Data:</span> {{ $json[\"DATA\"] }}</p>\n        <p><span class=\"info-label\">Sala/Local:</span> {{ $json['ESPAÇO'] }}</p>\n        <p><span class=\"info-label\">Horário:</span> {{ $json[\"INICIO\"] }} - {{ $json[\"TERMINO\"] }}</p>\n        <p><span class=\"info-label\">Curso:</span> {{ $json['TÍTULO'] }} </p>\n        <p><span class=\"info-label\">Formador(es):</span> {{ $json[\"FORMADORES\"] }}</p>\n        <p><span class=\"info-label\">Etapas:</span> {{ $json[\"ETAPAS\"] }}</p>\n        <p><span class=\"info-label\">Formato:</span> {{ $json[\"FORMATO\"] }}</p>\n        <p><span class=\"info-label\">Google Sala de Aula:</span> {{ $json[\"GOOGLE SALA DE AULA\"] }}</p>\n      </div>\n\n      <p style=\"margin-top: 20px;\">\n        Caso algum dado esteja incorreto, por favor, entre em contato com a secretaria.\n      </p>\n\n      <!-- Aviso de mensagem automática -->\n      <div class=\"no-reply\">\n        ⚠️ Esta é uma mensagem automática enviada pelo sistema do CECAPE.<br>\n        Por favor, não responda este e-mail, pois esta caixa de entrada não é monitorada.\n      </div>\n\n    </div>\n\n    <div class=\"footer\">\n      CECAPE - Centro de Capacitação de Profissionais da Educação<br>\n      Secretaria Municipal de Educação de São Caetano do Sul\n    </div>\n  </div>\n</body>\n</html>",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; background-color: #28b1d4; margin: 0; padding: 20px; }\n    .container { width: 100%; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; }\n\n    .header { background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 4px solid #00accf; }\n    .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n    .header-table td { width: 50%; text-align: center; vertical-align: middle; padding: 10px; }\n\n    .header-table img { width: 100%; max-width: 180px; height: auto; display: inline-block; }\n\n    .content { padding: 35px; background-color: #ffffff; }\n    .card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 5px solid #00accf; margin: 20px 0; }\n\n    .info-row { margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }\n    .info-label { font-weight: bold; color: #00accf; text-transform: uppercase; font-size: 12px; display: block; }\n    .info-value { color: #333; font-size: 16px; }\n\n    h2 { color: #00accf; margin-top: 0; font-size: 22px; text-align: center; }\n\n    .footer { background-color: #00accf; color: #ffffff; text-align: center; padding: 20px; font-size: 13px; font-weight: 300; }\n\n    .no-reply {\n      margin-top: 20px;\n      padding: 15px;\n      background-color: #fff3cd;\n      border: 1px solid #ffeeba;\n      border-radius: 8px;\n      color: #856404;\n      font-size: 13px;\n      text-align: center;\n    }\n\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <table class=\"header-table\">\n        <tr>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-seeduc.png\" alt=\"SEEDUC\"></td>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-cecape.png\" alt=\"CECAPE\"></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"content\">\n      <h2>Olá, <strong>{{ $json[\"NOME\"] }}</strong>!</h2>\n      <p>\n        {{ $json.FRASE_ABERTURA }} teremos um compromisso importante no CECAPE!\n        <br>\n        Seguem os dados de identificação do seu curso:\n      </p>\n\n      <div class=\"card\">\n        <p><span class=\"info-label\">Data:</span> {{ $json[\"DATA\"] }}</p>\n        <p><span class=\"info-label\">Sala/Local:</span> {{ $json['ESPAÇO'] }}</p>\n        <p><span class=\"info-label\">Horário:</span> {{ $json[\"INICIO\"] }} - {{ $json[\"TERMINO\"] }}</p>\n        <p><span class=\"info-label\">Curso:</span> {{ $json['TÍTULO'] }} </p>\n        <p><span class=\"info-label\">Formador(es):</span> {{ $json[\"FORMADORES\"] }}</p>\n        <p><span class=\"info-label\">Etapas:</span> {{ $json[\"ETAPAS\"] }}</p>\n        <p><span class=\"info-label\">Formato:</span> {{ $json[\"FORMATO\"] }}</p>\n        <p><span class=\"info-label\">Google Sala de Aula:</span> {{ $json[\"GOOGLE SALA DE AULA\"] }}</p>\n      </div>\n\n      <p style=\"margin-top: 20px;\">\n        Caso algum dado esteja incorreto, por favor, entre em contato com a secretaria.\n      </p>\n\n      <!-- Aviso de mensagem automática -->\n      <div class=\"no-reply\">\n        ⚠️ Esta é uma mensagem automática enviada pelo sistema do CECAPE.<br>\n        Por favor, não responda este e-mail, pois esta caixa de entrada não é monitorada.\n      </div>\n\n    </div>\n\n    <div class=\"footer\">\n      CECAPE - Centro de Capacitação de Profissionais da Educação<br>\n      Secretaria Municipal de Educação de São Caetano do Sul\n    </div>\n  </div>\n</body>\n</html>",
         "options": {
           "appendAttribution": false,
           "senderName": "CECAPE - SEEDUC"
@@ -404,9 +404,9 @@
         -1300,
         460
       ],
-      "id": "1c16a29e-7dc9-419e-8e7c-06bf87e26643",
+      "id": "91d7063c-be36-4f7c-a059-0206ac22ba46",
       "name": "Gmail - Enviar Aluno",
-      "webhookId": "3ba27e75-3e49-4763-a186-e7727ef70de0",
+      "webhookId": "31383c59-e27b-40f8-ae05-1dd2e4f0096d",
       "credentials": {
         "gmailOAuth2": {
           "id": "XWgFO39uPRofIXId",
@@ -427,15 +427,15 @@
         -1080,
         460
       ],
-      "id": "46b29bcf-88a7-4377-a78e-87f3e92567e9",
+      "id": "68347ce2-24c9-464d-b73f-9be45f7a6430",
       "name": "Wait Aluno (20s)",
-      "webhookId": "68b1841b-9fee-49fa-85a6-a244640fae05"
+      "webhookId": "1ef2e8dc-8585-429f-b0e6-70942629fd4c"
     },
     {
       "parameters": {
         "sendTo": "={{ $('Config - Variáveis').first().json.MODO_TESTE ? $('Config - Variáveis').first().json.EMAIL_TESTE : $json.PROFESSOR_EMAIL }}",
         "subject": "={{ ($('Config - Variáveis').first().json.MODO_TESTE ? '[TESTE p/ ' + $json.PROFESSOR_EMAIL + '] ' : '') + 'Aviso CECAPE • ' + $json['TÍTULO'] + ' • Dia ' + $json.DATA }}",
-        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; background-color: #28b1d4; margin: 0; padding: 20px; }\n    .container { width: 100%; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; }\n\n    .header { background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 4px solid #00accf; }\n    .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n    .header-table td { width: 50%; text-align: center; vertical-align: middle; padding: 10px; }\n\n    .header-table img { width: 100%; max-width: 180px; height: auto; display: inline-block; }\n\n    .content { padding: 35px; background-color: #ffffff; }\n    .card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 5px solid #00accf; margin: 20px 0; }\n\n    .info-row { margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }\n    .info-label { font-weight: bold; color: #00accf; text-transform: uppercase; font-size: 12px; display: block; }\n    .info-value { color: #333; font-size: 16px; }\n\n    h2 { color: #00accf; margin-top: 0; font-size: 22px; text-align: center; }\n\n    .footer { background-color: #00accf; color: #ffffff; text-align: center; padding: 20px; font-size: 13px; font-weight: 300; }\n\n    .no-reply {\n      margin-top: 20px;\n      padding: 15px;\n      background-color: #fff3cd;\n      border: 1px solid #ffeeba;\n      border-radius: 8px;\n      color: #856404;\n      font-size: 13px;\n      text-align: center;\n    }\n\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <table class=\"header-table\">\n        <tr>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-seeduc.png\" alt=\"SEEDUC\"></td>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-cecape.png\" alt=\"CECAPE\"></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"content\">\n      <h2>Olá, <strong>{{ $json.PROFESSOR_NOME }}</strong>!</h2>\n      <p>\n        Seus alunos já receberam a mensagem sobre o compromisso de hoje.\n\n        <br>\n        Seguem os dados de identificação do seu curso:\n      </p>\n\n      <div class=\"card\">\n        <p><span class=\"info-label\">Data:</span> {{ $json[\"DATA\"] }}</p>\n        <p><span class=\"info-label\">Sala/Local:</span> {{ $json[\"ESPAÇO\"] }}</p>\n        <p><span class=\"info-label\">Horário:</span> {{ $json.HORARIO_INICIO }} - {{ $json.HORARIO_FIM }}</p>\n        <p><span class=\"info-label\">Curso:</span> {{ $json[\"TÍTULO\"] }}</p>\n\n        <p><span class=\"info-label\">Etapas:</span> {{ $json[\"ETAPAS\"] }}</p>\n        <p><span class=\"info-label\">Formato:</span> {{ $json[\"FORMATO\"] }}</p>\n        <p><span class=\"info-label\">Google Sala de Aula:</span> {{ $json[\"GOOGLE SALA DE AULA\"] }}</p>\n      </div>\n\n      <p style=\"margin-top: 20px;\">\n        Caso algum dado esteja incorreto, por favor, entre em contato com a secretaria.\n      </p>\n\n      <!-- Aviso de mensagem automática -->\n      <div class=\"no-reply\">\n        ⚠️ Esta é uma mensagem automática enviada pelo sistema do CECAPE.<br>\n        Por favor, não responda este e-mail, pois esta caixa de entrada não é monitorada.\n      </div>\n\n    </div>\n\n    <div class=\"footer\">\n      CECAPE - Centro de Capacitação de Profissionais da Educação<br>\n      Secretaria Municipal de Educação de São Caetano do Sul\n    </div>\n  </div>\n</body>\n</html>",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; background-color: #28b1d4; margin: 0; padding: 20px; }\n    .container { width: 100%; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; }\n\n    .header { background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 4px solid #00accf; }\n    .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n    .header-table td { width: 50%; text-align: center; vertical-align: middle; padding: 10px; }\n\n    .header-table img { width: 100%; max-width: 180px; height: auto; display: inline-block; }\n\n    .content { padding: 35px; background-color: #ffffff; }\n    .card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 5px solid #00accf; margin: 20px 0; }\n\n    .info-row { margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }\n    .info-label { font-weight: bold; color: #00accf; text-transform: uppercase; font-size: 12px; display: block; }\n    .info-value { color: #333; font-size: 16px; }\n\n    h2 { color: #00accf; margin-top: 0; font-size: 22px; text-align: center; }\n\n    .footer { background-color: #00accf; color: #ffffff; text-align: center; padding: 20px; font-size: 13px; font-weight: 300; }\n\n    .no-reply {\n      margin-top: 20px;\n      padding: 15px;\n      background-color: #fff3cd;\n      border: 1px solid #ffeeba;\n      border-radius: 8px;\n      color: #856404;\n      font-size: 13px;\n      text-align: center;\n    }\n\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <table class=\"header-table\">\n        <tr>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-seeduc.png\" alt=\"SEEDUC\"></td>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-cecape.png\" alt=\"CECAPE\"></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"content\">\n      <h2>Olá, <strong>{{ $json.PROFESSOR_NOME }}</strong>!</h2>\n      <p>\n        Seus alunos já receberam a mensagem sobre o compromisso {{ $json.REF_DIA }}.\n\n        <br>\n        Seguem os dados de identificação do seu curso:\n      </p>\n\n      <div class=\"card\">\n        <p><span class=\"info-label\">Data:</span> {{ $json[\"DATA\"] }}</p>\n        <p><span class=\"info-label\">Sala/Local:</span> {{ $json[\"ESPAÇO\"] }}</p>\n        <p><span class=\"info-label\">Horário:</span> {{ $json.HORARIO_INICIO }} - {{ $json.HORARIO_FIM }}</p>\n        <p><span class=\"info-label\">Curso:</span> {{ $json[\"TÍTULO\"] }}</p>\n\n        <p><span class=\"info-label\">Etapas:</span> {{ $json[\"ETAPAS\"] }}</p>\n        <p><span class=\"info-label\">Formato:</span> {{ $json[\"FORMATO\"] }}</p>\n        <p><span class=\"info-label\">Google Sala de Aula:</span> {{ $json[\"GOOGLE SALA DE AULA\"] }}</p>\n      </div>\n\n      <p style=\"margin-top: 20px;\">\n        Caso algum dado esteja incorreto, por favor, entre em contato com a secretaria.\n      </p>\n\n      <!-- Aviso de mensagem automática -->\n      <div class=\"no-reply\">\n        ⚠️ Esta é uma mensagem automática enviada pelo sistema do CECAPE.<br>\n        Por favor, não responda este e-mail, pois esta caixa de entrada não é monitorada.\n      </div>\n\n    </div>\n\n    <div class=\"footer\">\n      CECAPE - Centro de Capacitação de Profissionais da Educação<br>\n      Secretaria Municipal de Educação de São Caetano do Sul\n    </div>\n  </div>\n</body>\n</html>",
         "options": {
           "appendAttribution": false,
           "senderName": "CECAPE - SEEDUC"
@@ -447,9 +447,9 @@
         -1080,
         700
       ],
-      "id": "93050af7-6a3b-419f-903c-ba37b79e4e76",
+      "id": "c9457898-f4b8-4f88-af7f-73f2621f41f6",
       "name": "Gmail - Enviar Formador",
-      "webhookId": "5f75cb7b-6549-46d6-adba-0714177e50fd",
+      "webhookId": "d069ebad-cf30-4d33-ab5a-399cda9dc412",
       "credentials": {
         "gmailOAuth2": {
           "id": "XWgFO39uPRofIXId",
@@ -470,9 +470,9 @@
         -860,
         700
       ],
-      "id": "284a6442-791d-43cd-ae0c-049081643219",
+      "id": "df2877e9-1e66-464c-87cd-320f88571f56",
       "name": "Wait Formador (5s)",
-      "webhookId": "cfb3306a-362f-4b75-b293-c5373ff37eb4"
+      "webhookId": "ee3ddd41-e6e8-4235-a833-17a79fd4e164"
     },
     {
       "parameters": {
@@ -484,7 +484,7 @@
         -1520,
         280
       ],
-      "id": "868d29cf-bee1-4e6c-a2c5-8dbdaf729a0b",
+      "id": "1fa495cf-af8b-4ef2-a040-ea973c65c9a8",
       "name": "Code - Resumo Final"
     }
   ],
