@@ -9,7 +9,7 @@
         -4600,
         300
       ],
-      "id": "fdaa6432-02a6-4254-8089-4ff394627271",
+      "id": "67a6f5e5-a72c-414a-a088-bbd5f5fa5a4c",
       "name": "When clicking ‘Execute workflow’"
     },
     {
@@ -29,28 +29,28 @@
         -4600,
         520
       ],
-      "id": "7771153d-2c5c-4f2f-b0ff-0f18abde23d4",
+      "id": "b96e9a08-988d-47a3-b155-e3494dd458ee",
       "name": "Agendamento 09:00"
     },
     {
       "parameters": {
-        "content": "## CECAPE — Workflow unificado (alunos + formadores)\n\n**Como funciona (por turma):**\n1. Lê a agenda mensal (formadores/dados do curso).\n2. Lista os diários \"AAAA MM DD CURSO DIÁRIO QR FORMAÇÃO\" na pasta do Drive.\n3. Para cada diário: percorre a linha 2 da aba FREQUÊNCIA (a partir de L2) até achar a data-alvo ou a sentinela 01/01/2026.\n4. Se a turma tem aula no dia seguinte: envia e-mail aos ALUNOS (colunas C/D, a partir da linha 3) e, só depois, aos FORMADORES da mesma turma. Então passa para o próximo diário.\n\n**Variáveis de teste** — edite o nó \"Config - Variáveis\":\n- `MODO_TESTE`: true = todos os e-mails vão para EMAIL_TESTE\n- `EMAIL_TESTE`: destinatário dos testes\n- `DATA_SIMULADA`: 'DD/MM/AAAA' para forçar a data, '' = automático (dia seguinte + regra de sábado→segunda)",
-        "height": 420,
-        "width": 560,
+        "content": "## CECAPE — Workflow unificado (alunos + formadores)\n\n**Como funciona:**\n1. Lê a agenda mensal (dados dos cursos/formadores).\n2. Lista os diários \"AAAA MM DD CURSO DIÁRIO QR FORMAÇÃO\" na pasta do Drive.\n3. Para cada diário: percorre a linha 2 da aba FREQUÊNCIA (a partir de L2) até achar a data-alvo ou a sentinela 01/01/2026.\n4. Monta UMA fila ordenada: alunos do curso 1 → formadores do curso 1 → alunos do curso 2 → formadores do curso 2 → ...\n5. Um ÚNICO loop envia a fila na ordem (sem loops aninhados — bug conhecido do n8n com Split In Batches aninhado).\n\n**Variáveis** — edite o nó \"Config - Variáveis\":\n- `MODO_TESTE`: true = todos os e-mails vão para EMAIL_TESTE\n- `EMAIL_TESTE`: destinatário dos testes\n- `DIAS_A_FRENTE`: quantos dias após hoje consultar (1 = dia seguinte, 0 = hoje, 2 = depois de amanhã...). Regra do sábado→segunda continua valendo.",
+        "height": 460,
+        "width": 580,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -4660,
-        -220
+        -260
       ],
-      "id": "967acdde-a11f-4d82-aad5-163ef302fa1d",
+      "id": "de318a61-d138-4927-9d85-9f16b5676937",
       "name": "Sticky Note - Instruções"
     },
     {
       "parameters": {
-        "jsCode": "// =========================================================\n// CONFIGURAÇÕES GERAIS — EDITE AQUI PARA TESTES\n// =========================================================\n\n// MODO_TESTE = true  -> NENHUM e-mail vai para alunos/formadores;\n//                       todas as mensagens são redirecionadas para EMAIL_TESTE\n//                       (o assunto mostra quem seria o destinatário real).\n// MODO_TESTE = false -> envio real para os destinatários.\nconst MODO_TESTE = true;\n\n// E-mail que recebe as mensagens quando MODO_TESTE = true\nconst EMAIL_TESTE = 'prof.flavio.spina@gmail.com';\n\n// DATA_SIMULADA:\n//  ''            -> usa automaticamente o dia seguinte (com regras de fim de semana)\n//  'DD/MM/AAAA'  -> força esta data como o \"dia seguinte\" (para testes)\nconst DATA_SIMULADA = '';\n\n// Pasta do Google Drive onde estão os diários (AAAA MM DD NOME DO CURSO DIÁRIO QR FORMAÇÃO)\nconst PASTA_DIARIOS_ID = '1-qF8Yh0oIXE8VJwypPjFkcjET1YCVmya';\n\n// Planilha da agenda mensal (dados dos cursos e dos formadores)\nconst AGENDA_SHEET_ID = '11_isrdRYiew08xo7rZyBqx1YkvyfR7IRmrHui37x768';\n\n// Data sentinela: ao encontrá-la na linha 2 da aba FREQUÊNCIA, para de percorrer a linha\nconst DATA_SENTINELA = '01/01/2026';\n\nreturn [{\n  json: {\n    MODO_TESTE,\n    EMAIL_TESTE,\n    DATA_SIMULADA,\n    PASTA_DIARIOS_ID,\n    AGENDA_SHEET_ID,\n    DATA_SENTINELA\n  }\n}];"
+        "jsCode": "// =========================================================\n// CONFIGURAÇÕES GERAIS — EDITE AQUI PARA TESTES\n// =========================================================\n\n// MODO_TESTE = true  -> NENHUM e-mail vai para alunos/formadores;\n//                       todas as mensagens são redirecionadas para EMAIL_TESTE\n//                       (o assunto mostra quem seria o destinatário real).\n// MODO_TESTE = false -> envio real para os destinatários.\nconst MODO_TESTE = true;\n\n// E-mail que recebe as mensagens quando MODO_TESTE = true\nconst EMAIL_TESTE = 'prof.flavio.spina@gmail.com';\n\n// DIAS_A_FRENTE: quantos dias após a data ATUAL devem ser consultados.\n//   1 = dia seguinte (padrão de produção)\n//   2 = daqui a dois dias, e assim por diante\n//   0 = o próprio dia de hoje (útil para testes)\n// A regra de fim de semana continua valendo: se a data-alvo cair num sábado,\n// a segunda-feira seguinte também entra como data-alvo.\nconst DIAS_A_FRENTE = 1;\n\n// Pasta do Google Drive onde estão os diários (AAAA MM DD NOME DO CURSO DIÁRIO QR FORMAÇÃO)\nconst PASTA_DIARIOS_ID = '1-qF8Yh0oIXE8VJwypPjFkcjET1YCVmya';\n\n// Planilha da agenda mensal (dados dos cursos e dos formadores)\nconst AGENDA_SHEET_ID = '11_isrdRYiew08xo7rZyBqx1YkvyfR7IRmrHui37x768';\n\n// Data sentinela: ao encontrá-la na linha 2 da aba FREQUÊNCIA, para de percorrer a linha\nconst DATA_SENTINELA = '01/01/2026';\n\nreturn [{\n  json: {\n    MODO_TESTE,\n    EMAIL_TESTE,\n    DIAS_A_FRENTE,\n    PASTA_DIARIOS_ID,\n    AGENDA_SHEET_ID,\n    DATA_SENTINELA\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -58,12 +58,12 @@
         -4380,
         400
       ],
-      "id": "6ca2ef7d-0504-44f7-a28e-02688973ce4c",
+      "id": "0e0010b2-fcbf-4feb-b210-792c8cfedce5",
       "name": "Config - Variáveis"
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Config - Variáveis').first().json;\nconst tz = 'America/Sao_Paulo';\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nlet tomorrow;\nif (cfg.DATA_SIMULADA && String(cfg.DATA_SIMULADA).trim() !== '') {\n  const m = String(cfg.DATA_SIMULADA).trim().match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  if (!m) {\n    throw new Error('DATA_SIMULADA inválida: use o formato DD/MM/AAAA ou deixe vazia.');\n  }\n  tomorrow = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12, 0, 0);\n} else {\n  const now = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));\n  tomorrow = new Date(now);\n  tomorrow.setDate(tomorrow.getDate() + 1);\n}\n\nfunction buildDateMeta(date, label) {\n  const yyyy = date.getFullYear();\n  const mm = pad(date.getMonth() + 1);\n  const dd = pad(date.getDate());\n  return {\n    label,\n    yyyy,\n    mm,\n    dd,\n    target_day: dd,\n    target_ymd: `${yyyy}-${mm}-${dd}`,\n    target_ddmmyyyy: `${dd}/${mm}/${yyyy}`,\n    weekday: date.toLocaleDateString('pt-BR', { timeZone: tz, weekday: 'long' })\n  };\n}\n\nconst targets = [buildDateMeta(tomorrow, 'amanha')];\n\n// Regra de fim de semana: se o dia-alvo for sábado, inclui também a segunda-feira.\nif (tomorrow.getDay() === 6) {\n  const monday = new Date(tomorrow);\n  monday.setDate(monday.getDate() + 2);\n  targets.push(buildDateMeta(monday, 'segunda_antecipada'));\n}\n\nconst target_days = [...new Set(targets.map(t => t.target_day))];\nconst target_ymds = [...new Set(targets.map(t => t.target_ymd))];\nconst target_ddmmyyyys = [...new Set(targets.map(t => t.target_ddmmyyyy))];\nconst month_tabs = [...new Set(targets.map(t => {\n  const m = new Date(`${t.target_ymd}T12:00:00`);\n  const monthName = m.toLocaleDateString('pt-BR', { timeZone: tz, month: 'long' });\n  return monthName.charAt(0).toUpperCase() + monthName.slice(1);\n}))];\n\nreturn [{\n  json: {\n    modo_teste: cfg.MODO_TESTE,\n    data_simulada: cfg.DATA_SIMULADA || '',\n    target_day: target_days[0],\n    target_ymd: target_ymds[0],\n    target_ddmmyyyy: target_ddmmyyyys[0],\n    month_tab: month_tabs[0],\n    target_days,\n    target_ymds,\n    target_ddmmyyyys,\n    month_tabs,\n    targets,\n    includes_monday_advance: targets.some(t => t.label === 'segunda_antecipada')\n  }\n}];"
+        "jsCode": "const cfg = $('Config - Variáveis').first().json;\nconst tz = 'America/Sao_Paulo';\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nconst dias = Number(cfg.DIAS_A_FRENTE);\nif (!Number.isFinite(dias) || dias < 0) {\n  throw new Error('DIAS_A_FRENTE inválido: use um número inteiro >= 0 (1 = dia seguinte).');\n}\n\nconst now = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));\nconst target = new Date(now);\ntarget.setDate(target.getDate() + Math.trunc(dias));\n\nfunction buildDateMeta(date, label) {\n  const yyyy = date.getFullYear();\n  const mm = pad(date.getMonth() + 1);\n  const dd = pad(date.getDate());\n  return {\n    label,\n    yyyy,\n    mm,\n    dd,\n    target_day: dd,\n    target_ymd: `${yyyy}-${mm}-${dd}`,\n    target_ddmmyyyy: `${dd}/${mm}/${yyyy}`,\n    weekday: date.toLocaleDateString('pt-BR', { timeZone: tz, weekday: 'long' })\n  };\n}\n\nconst targets = [buildDateMeta(target, 'data_alvo')];\n\n// Regra de fim de semana: se a data-alvo for sábado, inclui também a segunda-feira.\nif (target.getDay() === 6) {\n  const monday = new Date(target);\n  monday.setDate(monday.getDate() + 2);\n  targets.push(buildDateMeta(monday, 'segunda_antecipada'));\n}\n\nconst target_days = [...new Set(targets.map(t => t.target_day))];\nconst target_ymds = [...new Set(targets.map(t => t.target_ymd))];\nconst target_ddmmyyyys = [...new Set(targets.map(t => t.target_ddmmyyyy))];\nconst month_tabs = [...new Set(targets.map(t => {\n  const m = new Date(`${t.target_ymd}T12:00:00`);\n  const monthName = m.toLocaleDateString('pt-BR', { timeZone: tz, month: 'long' });\n  return monthName.charAt(0).toUpperCase() + monthName.slice(1);\n}))];\n\nreturn [{\n  json: {\n    modo_teste: cfg.MODO_TESTE,\n    dias_a_frente: Math.trunc(dias),\n    hoje: `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`,\n    target_day: target_days[0],\n    target_ymd: target_ymds[0],\n    target_ddmmyyyy: target_ddmmyyyys[0],\n    month_tab: month_tabs[0],\n    target_days,\n    target_ymds,\n    target_ddmmyyyys,\n    month_tabs,\n    targets,\n    includes_monday_advance: targets.some(t => t.label === 'segunda_antecipada')\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -71,7 +71,7 @@
         -4160,
         400
       ],
-      "id": "02d558b5-d0e1-4fca-a2ff-4203f02f7bd2",
+      "id": "8b828aa5-a050-42cc-b844-f5bab83ddee1",
       "name": "Preparar Data Alvo"
     },
     {
@@ -94,7 +94,7 @@
         -3940,
         300
       ],
-      "id": "8cb5c585-849e-4e3a-9fc6-0418c84822f7",
+      "id": "49dd33a6-7342-46a7-927e-37db9ec0a0be",
       "name": "Sheets - Agenda Mês 1",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -123,7 +123,7 @@
         -3940,
         520
       ],
-      "id": "189d2c23-8e3d-4c99-918e-2b4a7acda5e3",
+      "id": "4b144924-3742-4154-91ec-9bbd34c5a756",
       "name": "Sheets - Agenda Mês 2",
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -140,7 +140,7 @@
         -3720,
         400
       ],
-      "id": "62641c0c-1f86-4b8b-8083-27daad274345",
+      "id": "e394c231-6866-49c3-b1dd-cfb852df4799",
       "name": "Merge - Agenda Meses"
     },
     {
@@ -153,7 +153,7 @@
         -3500,
         400
       ],
-      "id": "4bc3671e-d8db-4e14-aceb-8e3df6a38679",
+      "id": "71f58d0d-8f54-4ffb-9f6b-1fa74ad9abf1",
       "name": "Code - Agenda Dia Seguinte"
     },
     {
@@ -179,7 +179,7 @@
         -3280,
         400
       ],
-      "id": "65da99af-8acc-4c12-8123-08d7b5ae03f9",
+      "id": "19eaf69d-a118-4e16-a81c-b6a6778f32e4",
       "name": "Drive - Listar Diários",
       "credentials": {
         "googleDriveOAuth2Api": {
@@ -198,34 +198,8 @@
         -3060,
         400
       ],
-      "id": "25baaadf-7eb2-4ad7-9a88-43d8dea57b5a",
+      "id": "5422002c-a658-43fe-b51b-a64f8674d882",
       "name": "Code - Preparar Diários"
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        -2840,
-        400
-      ],
-      "id": "f4f2b23c-7d7f-4e34-b59a-cc91912b048d",
-      "name": "Loop Diários"
-    },
-    {
-      "parameters": {
-        "jsCode": "return [{\n  json: {\n    status: 'CONCLUIDO',\n    mensagem: 'Todos os diários foram processados: alunos e formadores enviados turma a turma.'\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -2620,
-        220
-      ],
-      "id": "8e356614-25d2-462c-9b3c-55f73b035007",
-      "name": "Code - Resumo Final"
     },
     {
       "parameters": {
@@ -237,12 +211,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -2620,
-        480
+        -2840,
+        400
       ],
-      "id": "2705368a-1716-4dd6-9c9f-b3d918782e75",
+      "id": "6e8ca929-da92-4f95-9a2d-e9cd85d8a084",
       "name": "HTTP - Ler Datas (FREQUÊNCIA L2)",
       "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "nIfyEUF469O4ic3a",
@@ -252,16 +227,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const prep = $('Preparar Data Alvo').first().json;\nconst cfg = $('Config - Variáveis').first().json;\nconst diario = $('Loop Diários').first().json;\n\nconst resp = items[0]?.json || {};\nconst row = Array.isArray(resp.values) && Array.isArray(resp.values[0]) ? resp.values[0] : [];\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nfunction toDate(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n\n  if (typeof raw === 'number') {\n    const excelEpoch = new Date(Date.UTC(1899, 11, 30));\n    const d = new Date(excelEpoch.getTime() + raw * 86400000);\n    return {\n      ddmmyyyy: `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`,\n      ddmm: `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}`\n    };\n  }\n\n  const str = String(raw).trim();\n  if (!str) return null;\n\n  let m = str.match(/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/);\n  if (m) return { ddmmyyyy: `${pad(m[1])}/${pad(m[2])}/${m[3]}`, ddmm: `${pad(m[1])}/${pad(m[2])}` };\n\n  m = str.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (m) return { ddmmyyyy: `${m[3]}/${m[2]}/${m[1]}`, ddmm: `${m[3]}/${m[2]}` };\n\n  m = str.match(/^(\\d{1,2})\\/(\\d{1,2})$/);\n  if (m) return { ddmmyyyy: '', ddmm: `${pad(m[1])}/${pad(m[2])}` };\n\n  return null;\n}\n\nconst sentinela = toDate(cfg.DATA_SENTINELA) || { ddmmyyyy: '01/01/2026', ddmm: '01/01' };\nconst targetsFull = new Set(prep.target_ddmmyyyys || []);\nconst targetsDDMM = new Set((prep.target_ddmmyyyys || []).map(v => v.slice(0, 5)));\n\nlet erroLeitura = '';\nif (resp.error) {\n  erroLeitura = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'Erro ao ler a aba FREQUÊNCIA');\n}\n\n// Percorre a linha 2 a partir de L2; para na sentinela (01/01/2026).\nlet matched = '';\nlet celulasPercorridas = 0;\n\nfor (const cell of row) {\n  celulasPercorridas++;\n  const d = toDate(cell);\n  if (!d) continue;\n\n  const isSentinela =\n    (d.ddmmyyyy && sentinela.ddmmyyyy && d.ddmmyyyy === sentinela.ddmmyyyy) ||\n    (!d.ddmmyyyy && d.ddmm === sentinela.ddmm);\n  if (isSentinela) break;\n\n  const isAlvo =\n    (d.ddmmyyyy && targetsFull.has(d.ddmmyyyy)) ||\n    (!d.ddmmyyyy && targetsDDMM.has(d.ddmm));\n  if (isAlvo) {\n    matched = d.ddmmyyyy || [...targetsFull].find(t => t.startsWith(d.ddmm)) || d.ddmm;\n    break;\n  }\n}\n\nreturn [{\n  json: {\n    spreadsheetId: diario.spreadsheetId,\n    spreadsheetName: diario.spreadsheetName,\n    curso_nome: diario.curso_nome,\n    course_key: diario.course_key,\n    TEM_CURSO: !!matched,\n    DATA_MATCH: matched,\n    ERRO_LEITURA: erroLeitura,\n    _celulas_percorridas: celulasPercorridas\n  }\n}];"
+        "jsCode": "const prep = $('Preparar Data Alvo').first().json;\nconst cfg = $('Config - Variáveis').first().json;\n\n// Os diários originais, na MESMA ordem em que entraram no nó HTTP\n// (o nó HTTP devolve exatamente um item de resposta por item de entrada).\nconst diarios = $('Code - Preparar Diários').all().map(i => i.json);\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nfunction toDate(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n\n  if (typeof raw === 'number') {\n    const excelEpoch = new Date(Date.UTC(1899, 11, 30));\n    const d = new Date(excelEpoch.getTime() + raw * 86400000);\n    return {\n      ddmmyyyy: `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`,\n      ddmm: `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}`\n    };\n  }\n\n  const str = String(raw).trim();\n  if (!str) return null;\n\n  let m = str.match(/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/);\n  if (m) return { ddmmyyyy: `${pad(m[1])}/${pad(m[2])}/${m[3]}`, ddmm: `${pad(m[1])}/${pad(m[2])}` };\n\n  m = str.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (m) return { ddmmyyyy: `${m[3]}/${m[2]}/${m[1]}`, ddmm: `${m[3]}/${m[2]}` };\n\n  m = str.match(/^(\\d{1,2})\\/(\\d{1,2})$/);\n  if (m) return { ddmmyyyy: '', ddmm: `${pad(m[1])}/${pad(m[2])}` };\n\n  return null;\n}\n\nconst sentinela = toDate(cfg.DATA_SENTINELA) || { ddmmyyyy: '01/01/2026', ddmm: '01/01' };\nconst targetsFull = new Set(prep.target_ddmmyyyys || []);\nconst targetsDDMM = new Set((prep.target_ddmmyyyys || []).map(v => v.slice(0, 5)));\n\nconst out = [];\n\nitems.forEach((item, idx) => {\n  const resp = item.json || {};\n  const diario = diarios[idx] || {};\n\n  const row = Array.isArray(resp.values) && Array.isArray(resp.values[0]) ? resp.values[0] : [];\n\n  let erroLeitura = '';\n  if (resp.error) {\n    erroLeitura = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'Erro ao ler a aba FREQUÊNCIA');\n  }\n\n  // Percorre a linha 2 a partir de L2; para na sentinela (01/01/2026).\n  let matched = '';\n  for (const cell of row) {\n    const d = toDate(cell);\n    if (!d) continue;\n\n    const isSentinela =\n      (d.ddmmyyyy && sentinela.ddmmyyyy && d.ddmmyyyy === sentinela.ddmmyyyy) ||\n      (!d.ddmmyyyy && d.ddmm === sentinela.ddmm);\n    if (isSentinela) break;\n\n    const isAlvo =\n      (d.ddmmyyyy && targetsFull.has(d.ddmmyyyy)) ||\n      (!d.ddmmyyyy && targetsDDMM.has(d.ddmm));\n    if (isAlvo) {\n      matched = d.ddmmyyyy || [...targetsFull].find(t => t.startsWith(d.ddmm)) || d.ddmm;\n      break;\n    }\n  }\n\n  if (matched) {\n    out.push({\n      json: {\n        spreadsheetId: diario.spreadsheetId,\n        spreadsheetName: diario.spreadsheetName,\n        curso_nome: diario.curso_nome,\n        course_key: diario.course_key,\n        TEM_CURSO: true,\n        DATA_MATCH: matched,\n        ERRO_LEITURA: erroLeitura\n      }\n    });\n  }\n});\n\nif (!out.length) {\n  return [{\n    json: {\n      TEM_CURSO: false,\n      _motivo: 'Nenhum diário com aula na(s) data(s)-alvo: ' + (prep.target_ddmmyyyys || []).join(', ')\n    }\n  }];\n}\n\nreturn out;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2400,
-        480
+        -2620,
+        400
       ],
-      "id": "03fb61a4-57b8-457f-ba6d-07f0eaa93639",
-      "name": "Code - Verificar Data"
+      "id": "c33c22ab-f7b2-4ac8-a643-2b18190d7dd8",
+      "name": "Code - Verificar Datas"
     },
     {
       "parameters": {
@@ -274,7 +249,7 @@
           },
           "conditions": [
             {
-              "id": "ff49c0fc-0a4c-4f9c-96cf-3c86020bc296",
+              "id": "29a215a5-7d17-4e41-8c45-0b1d17237944",
               "leftValue": "={{ $json.TEM_CURSO }}",
               "rightValue": "",
               "operator": {
@@ -291,11 +266,11 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -2180,
-        480
+        -2400,
+        400
       ],
-      "id": "a637e3a8-6fef-429a-9b80-b8e511649142",
-      "name": "IF - Tem Curso no Dia Seguinte?"
+      "id": "00a70900-69ea-4081-bc6a-a0f76376f0ff",
+      "name": "IF - Tem Cursos no Dia Alvo?"
     },
     {
       "parameters": {
@@ -307,12 +282,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -1960,
-        560
+        -2180,
+        480
       ],
-      "id": "58e3b931-97d1-4ee5-bfe7-89f630857a51",
+      "id": "d8a8d06a-69d3-459c-962c-e3aed514a66d",
       "name": "HTTP - Ler Alunos (FREQUÊNCIA C3:D)",
       "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "nIfyEUF469O4ic3a",
@@ -322,16 +298,29 @@
     },
     {
       "parameters": {
-        "jsCode": "const info = $('Code - Verificar Data').first().json;\nconst agenda = ($('Code - Agenda Dia Seguinte').first().json._agenda) || [];\n\nfunction normalize(s = '') {\n  return String(s || '')\n    .normalize('NFD')\n    .replace(/[̀-ͯ]/g, '')\n    .toLowerCase()\n    .replace(/\\.(xlsx|xls|csv)$/i, '')\n    .replace(/[^\\p{L}\\p{N}]+/gu, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction scoreMatch(fileKey, agendaKey) {\n  if (!fileKey || !agendaKey) return 0;\n  if (fileKey === agendaKey) return 1000;\n  if (fileKey.includes(agendaKey) || agendaKey.includes(fileKey)) return 800;\n\n  const fileTokens = new Set(fileKey.split(' ').filter(Boolean));\n  const agendaTokens = new Set(agendaKey.split(' ').filter(Boolean));\n\n  let common = 0;\n  for (const t of fileTokens) {\n    if (agendaTokens.has(t)) common++;\n  }\n  if (!common) return 0;\n  return common * 10 - Math.abs(fileTokens.size - agendaTokens.size);\n}\n\nfunction formadoresDisplay(raw) {\n  return String(raw || '')\n    .replace(/\\r\\n?/g, '\\n')\n    .split('\\n')\n    .map(l => l\n      .replace(/^[-–•\\s]+/, '')\n      .replace(/\\s*[-–]\\s*[^\\s@]+@[^\\s@]+\\.[^\\s@]+\\s*$/i, '')\n      .replace(/<[^>]*>/g, '')\n      .trim())\n    .filter(Boolean)\n    .filter(l => !/^(formadores|professores)( externos)?:?$/i.test(l))\n    .join(', ');\n}\n\n// ----- localizar o curso na agenda mensal (sala, horário, formadores) -----\nlet curso = null;\nlet bestScore = 0;\nconst dm = String(info.DATA_MATCH || '');\n\nfor (const a of agenda) {\n  const aKey = normalize(a['TÍTULO'] || a['TITULO'] || '');\n  let score = scoreMatch(info.course_key, aKey);\n  if (dm && a._data_ymd && dm === a._data_ymd.split('-').reverse().join('/')) score += 50;\n  else if (dm && a._data_dia && dm.slice(0, 2) === a._data_dia) score += 20;\n  if (score > bestScore) {\n    bestScore = score;\n    curso = a;\n  }\n}\n\nconst encontrado = !!curso && bestScore >= 10;\nconst formadoresRaw = encontrado ? String(curso['FORMADORES'] ?? curso['PROFESSORES'] ?? '') : '';\n\nconst cursoInfo = {\n  spreadsheetId: info.spreadsheetId,\n  spreadsheetName: info.spreadsheetName,\n  curso_nome: info.curso_nome,\n  course_key: info.course_key,\n  DATA: dm || (encontrado ? String(curso['DATA'] ?? '') : ''),\n  'TÍTULO': encontrado && curso['TÍTULO'] ? curso['TÍTULO'] : info.curso_nome,\n  'ESPAÇO': encontrado ? (curso['ESPAÇO'] ?? curso['ESPACO'] ?? '') : '',\n  INICIO: encontrado ? (curso['INÍCIO'] ?? curso['INICIO'] ?? '') : '',\n  TERMINO: encontrado ? (curso['TÉRMINO'] ?? curso['TERMINO'] ?? '') : '',\n  ETAPAS: encontrado ? (curso['ETAPAS'] ?? '') : '',\n  FORMATO: encontrado ? (curso['FORMATO'] ?? '') : '',\n  'GOOGLE SALA DE AULA': encontrado ? (curso['GOOGLE SALA DE AULA'] ?? '') : '',\n  FORMADORES: formadoresDisplay(formadoresRaw),\n  FORMADORES_RAW: formadoresRaw,\n  CURSO_ENCONTRADO_NA_AGENDA: encontrado,\n  SCORE_AGENDA: bestScore\n};\n\n// ----- alunos: coluna C = nome, coluna D = e-mail (a partir da linha 3) -----\nconst resp = items[0]?.json || {};\nconst rows = Array.isArray(resp.values) ? resp.values : [];\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst seen = new Set();\nconst alunos = [];\n\nfor (const r of rows) {\n  const nome = String((r && r[0]) || '').trim();\n  const email = String((r && r[1]) || '').trim().toLowerCase();\n  if (!email || !emailRegex.test(email)) continue;\n  if (seen.has(email)) continue;\n  seen.add(email);\n  alunos.push({ NOME: nome || email, EMAIL_ALUNO: email });\n}\n\nif (!alunos.length) {\n  return [{\n    json: {\n      ...cursoInfo,\n      TEM_ALUNOS: false,\n      _motivo: 'Nenhum aluno com e-mail válido nas colunas C/D da aba FREQUÊNCIA.'\n    }\n  }];\n}\n\nreturn alunos.map(a => ({ json: { ...cursoInfo, ...a, TEM_ALUNOS: true } }));"
+        "jsCode": "// Monta UMA fila ordenada de envios:\n//   alunos do curso 1 -> formadores do curso 1 -> alunos do curso 2 -> ...\n// Assim o envio usa um ÚNICO loop, evitando o bug conhecido do n8n com\n// loops aninhados de Split In Batches (github.com/n8n-io/n8n/issues/23670).\n\nconst agenda = ($('Code - Agenda Dia Seguinte').first().json._agenda) || [];\n\n// Cursos com aula na data-alvo, na MESMA ordem em que entraram no nó HTTP.\nconst cursos = $('Code - Verificar Datas').all().map(i => i.json);\n\nfunction normalize(s = '') {\n  return String(s || '')\n    .normalize('NFD')\n    .replace(/[̀-ͯ]/g, '')\n    .toLowerCase()\n    .replace(/\\.(xlsx|xls|csv)$/i, '')\n    .replace(/[^\\p{L}\\p{N}]+/gu, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction scoreMatch(fileKey, agendaKey) {\n  if (!fileKey || !agendaKey) return 0;\n  if (fileKey === agendaKey) return 1000;\n  if (fileKey.includes(agendaKey) || agendaKey.includes(fileKey)) return 800;\n\n  const fileTokens = new Set(fileKey.split(' ').filter(Boolean));\n  const agendaTokens = new Set(agendaKey.split(' ').filter(Boolean));\n\n  let common = 0;\n  for (const t of fileTokens) {\n    if (agendaTokens.has(t)) common++;\n  }\n  if (!common) return 0;\n  return common * 10 - Math.abs(fileTokens.size - agendaTokens.size);\n}\n\nfunction formadoresDisplay(raw) {\n  return String(raw || '')\n    .replace(/\\r\\n?/g, '\\n')\n    .split('\\n')\n    .map(l => l\n      .replace(/^[-–•\\s]+/, '')\n      .replace(/\\s*[-–]\\s*[^\\s@]+@[^\\s@]+\\.[^\\s@]+\\s*$/i, '')\n      .replace(/<[^>]*>/g, '')\n      .trim())\n    .filter(Boolean)\n    .filter(l => !/^(formadores|professores)( externos)?:?$/i.test(l))\n    .join(', ');\n}\n\nfunction normalizeRawText(text = '') {\n  return String(text || '')\n    .replace(/\\\\r\\\\n/g, '\\n')\n    .replace(/\\\\n/g, '\\n')\n    .replace(/\\\\r/g, '\\n')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\r/g, '\\n')\n    .trim();\n}\n\nfunction splitLines(text = '') {\n  return normalizeRawText(text)\n    .split('\\n')\n    .map(v => v.trim())\n    .filter(Boolean);\n}\n\nfunction cleanLine(value = '') {\n  return String(value || '')\n    .replace(/^[-–•\\s]+/, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction isHeaderLine(s) {\n  const t = String(s || '').trim().toUpperCase();\n  return [\n    'FORMADORES:',\n    'FORMADORES',\n    'FORMADORES EXTERNOS:',\n    'FORMADORES EXTERNOS',\n    'PROFESSORES:',\n    'PROFESSORES',\n    'PROFESSORES EXTERNOS:',\n    'PROFESSORES EXTERNOS'\n  ].includes(t);\n}\n\nfunction parsePerson(rawLine) {\n  const value = cleanLine(rawLine);\n  if (!value || isHeaderLine(value)) return null;\n\n  let m = value.match(/^(.*?)\\s*-\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i);\n  if (m) {\n    return { nome: cleanLine(m[1]), email: m[2].trim().toLowerCase() };\n  }\n\n  m = value.match(/^(.*?)<\\s*([^>]+@[^>]+)\\s*>$/);\n  if (m) {\n    return { nome: cleanLine(m[1]) || m[2].trim(), email: m[2].trim().toLowerCase() };\n  }\n\n  m = value.match(/^([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i);\n  if (m) {\n    return { nome: m[1].trim(), email: m[1].trim().toLowerCase() };\n  }\n\n  return null;\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst fila = [];\n\nitems.forEach((item, idx) => {\n  const resp = item.json || {};\n  const info = cursos[idx] || {};\n  const dm = String(info.DATA_MATCH || '');\n\n  // ----- localizar o curso na agenda mensal (sala, horário, formadores) -----\n  let curso = null;\n  let bestScore = 0;\n\n  for (const a of agenda) {\n    const aKey = normalize(a['TÍTULO'] || a['TITULO'] || '');\n    let score = scoreMatch(info.course_key, aKey);\n    if (dm && a._data_ymd && dm === a._data_ymd.split('-').reverse().join('/')) score += 50;\n    else if (dm && a._data_dia && dm.slice(0, 2) === a._data_dia) score += 20;\n    if (score > bestScore) {\n      bestScore = score;\n      curso = a;\n    }\n  }\n\n  const encontrado = !!curso && bestScore >= 10;\n  const formadoresRaw = encontrado ? String(curso['FORMADORES'] ?? curso['PROFESSORES'] ?? '') : '';\n\n  const cursoInfo = {\n    spreadsheetId: info.spreadsheetId,\n    spreadsheetName: info.spreadsheetName,\n    curso_nome: info.curso_nome,\n    course_key: info.course_key,\n    DATA: dm || (encontrado ? String(curso['DATA'] ?? '') : ''),\n    'TÍTULO': encontrado && curso['TÍTULO'] ? curso['TÍTULO'] : info.curso_nome,\n    'ESPAÇO': encontrado ? (curso['ESPAÇO'] ?? curso['ESPACO'] ?? '') : '',\n    INICIO: encontrado ? (curso['INÍCIO'] ?? curso['INICIO'] ?? '') : '',\n    TERMINO: encontrado ? (curso['TÉRMINO'] ?? curso['TERMINO'] ?? '') : '',\n    ETAPAS: encontrado ? (curso['ETAPAS'] ?? '') : '',\n    FORMATO: encontrado ? (curso['FORMATO'] ?? '') : '',\n    'GOOGLE SALA DE AULA': encontrado ? (curso['GOOGLE SALA DE AULA'] ?? '') : '',\n    FORMADORES: formadoresDisplay(formadoresRaw),\n    CURSO_ENCONTRADO_NA_AGENDA: encontrado,\n    SCORE_AGENDA: bestScore\n  };\n\n  // ----- alunos: coluna C = nome, coluna D = e-mail (a partir da linha 3) -----\n  const rows = Array.isArray(resp.values) ? resp.values : [];\n  const seenAlunos = new Set();\n\n  for (const r of rows) {\n    const nome = String((r && r[0]) || '').trim();\n    const email = String((r && r[1]) || '').trim().toLowerCase();\n    if (!email || !emailRegex.test(email)) continue;\n    if (seenAlunos.has(email)) continue;\n    seenAlunos.add(email);\n\n    fila.push({\n      json: {\n        ...cursoInfo,\n        TIPO_ENVIO: 'ALUNO',\n        NOME: nome || email,\n        EMAIL_ALUNO: email\n      }\n    });\n  }\n\n  // ----- formadores do MESMO curso, logo após os alunos -----\n  const seenProf = new Set();\n\n  for (const linha of splitLines(formadoresRaw)) {\n    const p = parsePerson(linha);\n    if (!p || !p.email) continue;\n    if (seenProf.has(p.email)) continue;\n    seenProf.add(p.email);\n\n    fila.push({\n      json: {\n        ...cursoInfo,\n        TIPO_ENVIO: 'FORMADOR',\n        PROFESSOR_NOME: p.nome,\n        PROFESSOR_EMAIL: p.email,\n        HORARIO_INICIO: cursoInfo.INICIO || '',\n        HORARIO_FIM: cursoInfo.TERMINO || '',\n        TITULO_CURSO: cursoInfo['TÍTULO'] || info.curso_nome\n      }\n    });\n  }\n});\n\nif (!fila.length) {\n  return [{\n    json: {\n      TIPO_ENVIO: 'NENHUM',\n      _motivo: 'Cursos com aula na data-alvo foram encontrados, mas sem alunos/formadores com e-mail válido.'\n    }\n  }];\n}\n\nreturn fila.map((f, i) => ({ json: { ...f.json, ORDEM: i + 1, TOTAL_FILA: fila.length } }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1740,
-        560
+        -1960,
+        480
       ],
-      "id": "96e87186-ae76-445f-800c-b024c1e82c9e",
-      "name": "Code - Montar Alunos"
+      "id": "aff3d91c-6e76-4d2d-a2ce-dd625c26e153",
+      "name": "Code - Montar Fila de Envios"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1740,
+        480
+      ],
+      "id": "eaac4e29-07be-4a6c-bc57-006e967dba00",
+      "name": "Loop Envios"
     },
     {
       "parameters": {
@@ -344,13 +333,12 @@
           },
           "conditions": [
             {
-              "id": "a70f87af-bfd4-4529-9e82-35fb25b7f76d",
-              "leftValue": "={{ $json.TEM_ALUNOS }}",
-              "rightValue": "",
+              "id": "33ba028e-2afc-4f5d-aa49-7bac28fb8913",
+              "leftValue": "={{ $json.TIPO_ENVIO }}",
+              "rightValue": "ALUNO",
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
+                "type": "string",
+                "operation": "equals"
               }
             }
           ],
@@ -364,21 +352,41 @@
         -1520,
         560
       ],
-      "id": "5fadd092-f987-422d-899f-89c9b3fcf720",
-      "name": "IF - Tem Alunos?"
+      "id": "127a56c0-ab6b-4028-8766-67e47bc3bed0",
+      "name": "IF - Envio para Aluno?"
     },
     {
       "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "74a496c5-ae76-49ee-81e6-cadef82925ab",
+              "leftValue": "={{ $json.TIPO_ENVIO }}",
+              "rightValue": "FORMADOR",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
         "options": {}
       },
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
       "position": [
         -1300,
-        560
+        700
       ],
-      "id": "0674b42e-e7c3-4d1b-9b20-350172e42f57",
-      "name": "Loop Alunos"
+      "id": "06f3f600-b7c6-4df1-9dc4-661d6fdbc01f",
+      "name": "IF - Envio para Formador?"
     },
     {
       "parameters": {
@@ -393,12 +401,12 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        -1080,
-        660
+        -1300,
+        460
       ],
-      "id": "b2c55f9d-d219-490f-ab0c-4ea3734e399b",
+      "id": "1c16a29e-7dc9-419e-8e7c-06bf87e26643",
       "name": "Gmail - Enviar Aluno",
-      "webhookId": "380c6dc4-6726-4d79-a372-149cbff6e5f9",
+      "webhookId": "3ba27e75-3e49-4763-a186-e7727ef70de0",
       "credentials": {
         "gmailOAuth2": {
           "id": "XWgFO39uPRofIXId",
@@ -416,72 +424,12 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        -860,
-        660
-      ],
-      "id": "67a076d7-6277-4e59-bac0-ffb8058b8068",
-      "name": "Wait Aluno (20s)",
-      "webhookId": "dc597499-e430-4a73-bd11-47ea14d7a704"
-    },
-    {
-      "parameters": {
-        "jsCode": "const base = $('Code - Montar Alunos').first().json;\nconst raw = String(base.FORMADORES_RAW || '').trim();\n\nfunction normalizeRawText(text = '') {\n  return String(text || '')\n    .replace(/\\\\r\\\\n/g, '\\n')\n    .replace(/\\\\n/g, '\\n')\n    .replace(/\\\\r/g, '\\n')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/\\r/g, '\\n')\n    .trim();\n}\n\nfunction splitLines(text = '') {\n  return normalizeRawText(text)\n    .split('\\n')\n    .map(v => v.trim())\n    .filter(Boolean);\n}\n\nfunction cleanLine(value = '') {\n  return String(value || '')\n    .replace(/^[-–•\\s]+/, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction isHeaderLine(s) {\n  const t = String(s || '').trim().toUpperCase();\n  return [\n    'FORMADORES:',\n    'FORMADORES',\n    'FORMADORES EXTERNOS:',\n    'FORMADORES EXTERNOS',\n    'PROFESSORES:',\n    'PROFESSORES',\n    'PROFESSORES EXTERNOS:',\n    'PROFESSORES EXTERNOS'\n  ].includes(t);\n}\n\nfunction parsePerson(rawLine) {\n  const value = cleanLine(rawLine);\n  if (!value || isHeaderLine(value)) return null;\n\n  let m = value.match(/^(.*?)\\s*-\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i);\n  if (m) {\n    return { nome: cleanLine(m[1]), email: m[2].trim().toLowerCase() };\n  }\n\n  m = value.match(/^(.*?)<\\s*([^>]+@[^>]+)\\s*>$/);\n  if (m) {\n    return { nome: cleanLine(m[1]) || m[2].trim(), email: m[2].trim().toLowerCase() };\n  }\n\n  m = value.match(/^([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i);\n  if (m) {\n    return { nome: m[1].trim(), email: m[1].trim().toLowerCase() };\n  }\n\n  return null;\n}\n\nconst out = [];\nconst dedup = new Set();\n\nfor (const linha of splitLines(raw)) {\n  const p = parsePerson(linha);\n  if (!p || !p.email) continue;\n  if (dedup.has(p.email)) continue;\n  dedup.add(p.email);\n\n  out.push({\n    json: {\n      ...base,\n      PROFESSOR_NOME: p.nome,\n      PROFESSOR_EMAIL: p.email,\n      HORARIO_INICIO: base.INICIO || '',\n      HORARIO_FIM: base.TERMINO || '',\n      TITULO_CURSO: base['TÍTULO'] || base.curso_nome,\n      TEM_FORMADORES: true\n    }\n  });\n}\n\nif (!out.length) {\n  return [{\n    json: {\n      ...base,\n      TEM_FORMADORES: false,\n      _motivo: raw\n        ? 'Nenhum e-mail de formador reconhecido no campo FORMADORES.'\n        : 'Curso sem formadores na agenda (ou curso não localizado na agenda mensal).'\n    }\n  }];\n}\n\nreturn out;"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
         -1080,
-        380
+        460
       ],
-      "id": "e60b2557-2e78-478c-a711-a97ec26c67a3",
-      "name": "Code - Montar Formadores"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "3f259ba2-6aa6-481b-b056-28301f917b98",
-              "leftValue": "={{ $json.TEM_FORMADORES }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -860,
-        380
-      ],
-      "id": "5538e229-3a04-4dc5-93be-9cae4ea6af5e",
-      "name": "IF - Tem Formadores?"
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        -640,
-        380
-      ],
-      "id": "7d655a9f-15bf-46c8-9e21-1017628b5c85",
-      "name": "Loop Formadores"
+      "id": "46b29bcf-88a7-4377-a78e-87f3e92567e9",
+      "name": "Wait Aluno (20s)",
+      "webhookId": "68b1841b-9fee-49fa-85a6-a244640fae05"
     },
     {
       "parameters": {
@@ -496,12 +444,12 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        -420,
-        460
+        -1080,
+        700
       ],
-      "id": "deb03c5c-4de5-40a2-9672-38bf7e1c2029",
+      "id": "93050af7-6a3b-419f-903c-ba37b79e4e76",
       "name": "Gmail - Enviar Formador",
-      "webhookId": "ccd9cd00-4b56-4d0a-8e9a-86df2cdb1ff6",
+      "webhookId": "5f75cb7b-6549-46d6-adba-0714177e50fd",
       "credentials": {
         "gmailOAuth2": {
           "id": "XWgFO39uPRofIXId",
@@ -519,12 +467,25 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        -200,
-        460
+        -860,
+        700
       ],
-      "id": "bc0bd957-aaf0-47d7-af4d-b559aaad33ad",
+      "id": "284a6442-791d-43cd-ae0c-049081643219",
       "name": "Wait Formador (5s)",
-      "webhookId": "fe1feb12-9818-48ee-8548-c3b2148b835e"
+      "webhookId": "cfb3306a-362f-4b75-b293-c5373ff37eb4"
+    },
+    {
+      "parameters": {
+        "jsCode": "let fila = [];\ntry {\n  fila = $('Code - Montar Fila de Envios').all().map(i => i.json);\n} catch (e) {\n  fila = [];\n}\n\nconst envios = fila.filter(f => f.TIPO_ENVIO === 'ALUNO' || f.TIPO_ENVIO === 'FORMADOR');\nconst cursos = [...new Set(envios.map(f => f.spreadsheetName))];\n\nreturn [{\n  json: {\n    status: envios.length ? 'CONCLUIDO' : 'SEM_ENVIOS',\n    cursos_processados: cursos.length,\n    cursos,\n    emails_alunos: envios.filter(f => f.TIPO_ENVIO === 'ALUNO').length,\n    emails_formadores: envios.filter(f => f.TIPO_ENVIO === 'FORMADOR').length,\n    mensagem: envios.length\n      ? 'Fila processada na ordem: alunos e depois formadores, turma a turma.'\n      : 'Nenhum e-mail para enviar na(s) data(s)-alvo.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1520,
+        280
+      ],
+      "id": "868d29cf-bee1-4e6c-a2c5-8dbdaf729a0b",
+      "name": "Code - Resumo Final"
     }
   ],
   "pinData": {},
@@ -637,24 +598,6 @@
       "main": [
         [
           {
-            "node": "Loop Diários",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Loop Diários": {
-      "main": [
-        [
-          {
-            "node": "Code - Resumo Final",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
             "node": "HTTP - Ler Datas (FREQUÊNCIA L2)",
             "type": "main",
             "index": 0
@@ -666,25 +609,25 @@
       "main": [
         [
           {
-            "node": "Code - Verificar Data",
+            "node": "Code - Verificar Datas",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Code - Verificar Data": {
+    "Code - Verificar Datas": {
       "main": [
         [
           {
-            "node": "IF - Tem Curso no Dia Seguinte?",
+            "node": "IF - Tem Cursos no Dia Alvo?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF - Tem Curso no Dia Seguinte?": {
+    "IF - Tem Cursos no Dia Alvo?": {
       "main": [
         [
           {
@@ -695,7 +638,7 @@
         ],
         [
           {
-            "node": "Loop Diários",
+            "node": "Code - Resumo Final",
             "type": "main",
             "index": 0
           }
@@ -706,54 +649,72 @@
       "main": [
         [
           {
-            "node": "Code - Montar Alunos",
+            "node": "Code - Montar Fila de Envios",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Code - Montar Alunos": {
+    "Code - Montar Fila de Envios": {
       "main": [
         [
           {
-            "node": "IF - Tem Alunos?",
+            "node": "Loop Envios",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "IF - Tem Alunos?": {
+    "Loop Envios": {
       "main": [
         [
           {
-            "node": "Loop Alunos",
+            "node": "Code - Resumo Final",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Code - Montar Formadores",
+            "node": "IF - Envio para Aluno?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Loop Alunos": {
+    "IF - Envio para Aluno?": {
       "main": [
-        [
-          {
-            "node": "Code - Montar Formadores",
-            "type": "main",
-            "index": 0
-          }
-        ],
         [
           {
             "node": "Gmail - Enviar Aluno",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - Envio para Formador?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Envio para Formador?": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Enviar Formador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Envios",
             "type": "main",
             "index": 0
           }
@@ -775,54 +736,7 @@
       "main": [
         [
           {
-            "node": "Loop Alunos",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code - Montar Formadores": {
-      "main": [
-        [
-          {
-            "node": "IF - Tem Formadores?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "IF - Tem Formadores?": {
-      "main": [
-        [
-          {
-            "node": "Loop Formadores",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Loop Diários",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Loop Formadores": {
-      "main": [
-        [
-          {
-            "node": "Loop Diários",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Gmail - Enviar Formador",
+            "node": "Loop Envios",
             "type": "main",
             "index": 0
           }
@@ -844,7 +758,7 @@
       "main": [
         [
           {
-            "node": "Loop Formadores",
+            "node": "Loop Envios",
             "type": "main",
             "index": 0
           }

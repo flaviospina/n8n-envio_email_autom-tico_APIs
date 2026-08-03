@@ -9,27 +9,31 @@ Arquivo do workflow: `CECAPE-envio-unificado-alunos-formadores-diario-QR.json`
 ## Como funciona
 
 1. **Config - Variáveis**: nó inicial com as variáveis de teste/execução (veja abaixo).
-2. **Preparar Data Alvo**: calcula o dia seguinte (ou usa `DATA_SIMULADA`).
-   Regra de fim de semana mantida: se o dia seguinte for **sábado**, a
-   **segunda-feira** também entra como data-alvo.
+2. **Preparar Data Alvo**: calcula a data-alvo somando `DIAS_A_FRENTE` dias à
+   data atual (`1` = dia seguinte). Regra de fim de semana mantida: se a
+   data-alvo for **sábado**, a **segunda-feira** também entra como data-alvo.
 3. **Agenda mensal** (planilha `11_isrdRYiew08xo7rZyBqx1YkvyfR7IRmrHui37x768`):
    lê a(s) aba(s) do(s) mês(es)-alvo e guarda os cursos do dia seguinte
    (sala, horário, título, formadores etc.).
 4. **Diários**: lista as planilhas da pasta do Drive
    `1-qF8Yh0oIXE8VJwypPjFkcjET1YCVmya` cujo nome segue o padrão
    `AAAA MM DD NOME DO CURSO DIÁRIO QR FORMAÇÃO`.
-5. Para **cada diário** (um por vez):
-   - Lê a aba **FREQUÊNCIA**, linha 2 **a partir de L2**, e percorre as células
-     comparando com a(s) data(s)-alvo. Ao encontrar a data sentinela
-     **01/01/2026**, para de percorrer.
-   - Se a turma tem aula no dia seguinte: lê os alunos — **coluna C = nome**,
-     **coluna D = e-mail**, a partir da **linha 3** — e envia o e-mail de aviso
-     a cada aluno (intervalo de 20 s entre envios).
-   - Terminados os alunos, envia o e-mail aos **formadores daquela mesma turma**
-     (campo FORMADORES da agenda mensal, formato `Nome - email`).
-   - Só então passa para o **próximo diário/turma** — resolvendo o problema de
-     ter que rodar a automação de novo quando há mais de um curso no mesmo dia.
-6. Gatilhos: manual e agendado (todos os dias às 09:00, fuso America/Sao_Paulo).
+5. Para cada diário, lê a aba **FREQUÊNCIA**, linha 2 **a partir de L2**, e
+   percorre as células comparando com a(s) data(s)-alvo. Ao encontrar a data
+   sentinela **01/01/2026**, para de percorrer.
+6. Para as turmas com aula na data-alvo, lê os alunos — **coluna C = nome**,
+   **coluna D = e-mail**, a partir da **linha 3** — e monta **uma fila única e
+   ordenada de envios**: alunos do curso 1 → formadores do curso 1 → alunos do
+   curso 2 → formadores do curso 2 → ... (formadores vêm do campo FORMADORES da
+   agenda mensal, formato `Nome - email`).
+7. Um **único loop** percorre a fila e dispara cada e-mail na ordem (20 s de
+   intervalo após e-mail de aluno, 5 s após e-mail de formador). Não há loops
+   aninhados: o *Split In Batches* aninhado tem bug conhecido no n8n em que o
+   loop interno só roda na primeira iteração do externo
+   (github.com/n8n-io/n8n/issues/23670) — por isso a fila única garante que
+   TODAS as turmas do dia sejam processadas até o último formador do último
+   curso.
+8. Gatilhos: manual e agendado (todos os dias às 09:00, fuso America/Sao_Paulo).
 
 ## Variáveis de teste (nó "Config - Variáveis")
 
@@ -37,7 +41,7 @@ Arquivo do workflow: `CECAPE-envio-unificado-alunos-formadores-diario-QR.json`
 |---|---|---|
 | `MODO_TESTE` | `true` / `false` | `true`: nenhum e-mail vai para alunos/formadores; tudo é redirecionado para `EMAIL_TESTE` e o assunto indica o destinatário real (`[TESTE p/ ...]`). `false`: envio real. |
 | `EMAIL_TESTE` | e-mail | Caixa que recebe os envios em modo teste. |
-| `DATA_SIMULADA` | `''` ou `'DD/MM/AAAA'` | Vazio: usa automaticamente o dia seguinte. Preenchida: força essa data como "dia seguinte" (as regras de fim de semana continuam valendo). |
+| `DIAS_A_FRENTE` | inteiro >= 0 | Quantos dias após a data atual consultar: `1` = dia seguinte (produção), `0` = hoje, `2` = depois de amanhã etc. As regras de fim de semana continuam valendo sobre a data resultante. |
 | `PASTA_DIARIOS_ID` | id do Drive | Pasta onde estão os diários QR. |
 | `AGENDA_SHEET_ID` | id da planilha | Agenda mensal com os dados dos cursos/formadores. |
 | `DATA_SENTINELA` | `'01/01/2026'` | Data que interrompe a varredura da linha 2 da aba FREQUÊNCIA. |
