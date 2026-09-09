@@ -32,10 +32,17 @@ A agenda mensal (`11_isrdRY...`) foi removida do fluxo por não ser confiável.
    | `D21:D25` | Horário da aula (mesma linha da data) |
    | `F21:F25` | Sala da aula (mesma linha da data) |
 
-5. Se alguma data de `B21:B25` for igual à data-alvo, a turma entra no envio
-   usando o **horário** e a **sala** daquela mesma linha. Sala vazia → o e-mail
-   sai com o aviso *"A sala será orientada no dia do curso, ao chegar ao
-   prédio."* (texto editável na variável `AVISO_SALA`).
+5. **Validação da data da aula (dupla)**: a turma entra no envio se a
+   data-alvo aparecer na **linha 2 da aba FREQUÊNCIA** (varrida a partir da
+   célula configurada em `CELULA_INICIO_DATAS`, padrão `L2`, parando na
+   `DATA_SENTINELA` `01/01/2026`) **ou** nas datas de `ID!B21:B25` — que
+   passarão a ser preenchidas a partir de outubro; quando isso acontecer,
+   nada precisa mudar no workflow.
+   O **horário** e a **sala** vêm da linha de `B21:F25` cuja data casou;
+   enquanto essas datas não existirem, usa-se a primeira linha preenchida da
+   grade. Sala vazia → o e-mail sai com o aviso *"A sala será orientada no
+   dia do curso, ao chegar ao prédio."* (texto editável na variável
+   `AVISO_SALA`).
 6. **Alunos**: aba **FREQUÊNCIA** do mesmo diário — **coluna C = nome**,
    **coluna D = e-mail**, a partir da **linha 3**. Linhas sem e-mail válido são
    ignoradas; e-mails repetidos na turma são deduplicados.
@@ -62,6 +69,8 @@ A agenda mensal (`11_isrdRY...`) foi removida do fluxo por não ser confiável.
 | `DIAS_A_FRENTE` | inteiro >= 0 | Quantos dias após a data atual consultar: `1` = dia seguinte (produção), `0` = hoje, `2` = depois de amanhã etc. A regra sábado→segunda vale sobre a data resultante. |
 | `PASTA_DIARIOS_ID` | id do Drive | Pasta onde estão os diários QR. |
 | `AVISO_SALA` | texto | Mensagem usada no lugar da sala quando `F21:F25` está vazio. |
+| `CELULA_INICIO_DATAS` | célula (ex.: `L2`) | Onde começam as datas na linha 2 da aba FREQUÊNCIA. |
+| `DATA_SENTINELA` | `'01/01/2026'` | Data que encerra a varredura da linha 2 da FREQUÊNCIA. |
 
 ## Campos exibidos nos e-mails
 

@@ -9,7 +9,7 @@
         -4600,
         300
       ],
-      "id": "01818a64-0dc3-4eaf-b3ae-3646b3793d08",
+      "id": "4f393f56-bb35-4077-9a59-635c566ddc67",
       "name": "When clicking ‘Execute workflow’"
     },
     {
@@ -29,12 +29,12 @@
         -4600,
         520
       ],
-      "id": "3de90323-e24f-4441-bae0-2870d804bbf8",
+      "id": "befe52a4-7b21-40bb-89a6-6faa2dcacc54",
       "name": "Agendamento 09:00"
     },
     {
       "parameters": {
-        "content": "## CECAPE — Workflow unificado (alunos + formadores)\n\n**Fonte única: pasta dos diários QR (a agenda mensal foi removida).**\n\n**Como funciona:**\n1. Lista os diários \"AAAA MM DD CURSO DIÁRIO QR FORMAÇÃO\" na pasta do Drive.\n2. Para cada diário, lê a aba ID: D4 curso, E4 carga horária, F4 modalidade, D6 início do curso, D7 formadores (vírgula), D8 e-mails dos formadores, B21:B25 datas, D21:D25 horários, F21:F25 salas.\n3. Se alguma data B21:B25 é a data-alvo, a turma entra no envio com o horário e a sala daquela linha (sala vazia → aviso \"sala será orientada no dia\").\n4. Alunos: aba FREQUÊNCIA, coluna C = nome, D = e-mail, a partir da linha 3.\n5. Fila única ordenada: alunos do curso 1 → formadores do curso 1 → curso 2 → ... (sem loops aninhados — bug conhecido do n8n).\n\n**Variáveis** — edite o nó \"Config - Variáveis\":\n- `MODO_TESTE`: true = todos os e-mails vão para EMAIL_TESTE\n- `EMAIL_TESTE`: destinatário dos testes\n- `DIAS_A_FRENTE`: dias após hoje (1 = dia seguinte, 0 = hoje...). Sábado→segunda continua valendo.\n- `AVISO_SALA`: texto usado quando a sala está vazia",
+        "content": "## CECAPE — Workflow unificado (alunos + formadores)\n\n**Fonte única: pasta dos diários QR (a agenda mensal foi removida).**\n\n**Como funciona:**\n1. Lista os diários \"AAAA MM DD CURSO DIÁRIO QR FORMAÇÃO\" na pasta do Drive.\n2. Para cada diário, lê a aba ID (D4 curso, E4 carga horária, F4 modalidade, D6 início, D7 formadores, D8 e-mails, B21:F25 datas/horários/salas) e a linha 2 da aba FREQUÊNCIA.\n3. Validação da data-alvo (dupla): linha 2 da FREQUÊNCIA a partir da célula configurada (para na sentinela 01/01/2026) OU datas em ID!B21:B25 — que passam a valer a partir de outubro.\n4. Horário e sala: da linha de B21:F25 cuja data casou; enquanto as datas não estiverem lá, usa a primeira linha preenchida. Sala vazia → aviso \"sala será orientada no dia\".\n5. Alunos: aba FREQUÊNCIA, coluna C = nome, D = e-mail, a partir da linha 3.\n6. Fila única ordenada: alunos do curso 1 → formadores do curso 1 → curso 2 → ... (sem loops aninhados — bug conhecido do n8n).\n\n**Variáveis** — edite o nó \"Config - Variáveis\":\n- `MODO_TESTE`: true = todos os e-mails vão para EMAIL_TESTE\n- `EMAIL_TESTE`: destinatário dos testes\n- `DIAS_A_FRENTE`: dias após hoje (1 = dia seguinte, 0 = hoje...). Sábado→segunda continua valendo.\n- `AVISO_SALA`: texto usado quando a sala está vazia\n- `CELULA_INICIO_DATAS`: célula onde começam as datas na linha 2 da FREQUÊNCIA (padrão L2)\n- `DATA_SENTINELA`: data que encerra a varredura da linha 2",
         "height": 520,
         "width": 620,
         "color": 4
@@ -45,12 +45,12 @@
         -4660,
         -320
       ],
-      "id": "cde97c6b-ea18-403a-a2ea-be7b4e457906",
+      "id": "efce3302-ffbd-4c03-9afa-ef994b6bcf77",
       "name": "Sticky Note - Instruções"
     },
     {
       "parameters": {
-        "jsCode": "// =========================================================\n// CONFIGURAÇÕES GERAIS — EDITE AQUI PARA TESTES\n// =========================================================\n\n// MODO_TESTE = true  -> NENHUM e-mail vai para alunos/formadores;\n//                       todas as mensagens são redirecionadas para EMAIL_TESTE\n//                       (o assunto mostra quem seria o destinatário real).\n// MODO_TESTE = false -> envio real para os destinatários.\nconst MODO_TESTE = true;\n\n// E-mail que recebe as mensagens quando MODO_TESTE = true\nconst EMAIL_TESTE = 'prof.flavio.spina@gmail.com';\n\n// DIAS_A_FRENTE: quantos dias após a data ATUAL devem ser consultados.\n//   1 = dia seguinte (padrão de produção)\n//   2 = daqui a dois dias, e assim por diante\n//   0 = o próprio dia de hoje (útil para testes)\n// A regra de fim de semana continua valendo: se a data-alvo cair num sábado,\n// a segunda-feira seguinte também entra como data-alvo.\nconst DIAS_A_FRENTE = 1;\n\n// Pasta do Google Drive onde estão os diários (AAAA MM DD NOME DO CURSO DIÁRIO QR FORMAÇÃO)\nconst PASTA_DIARIOS_ID = '1-qF8Yh0oIXE8VJwypPjFkcjET1YCVmya';\n\n// Texto exibido no lugar da sala quando F21:F25 estiver vazio na aba ID\nconst AVISO_SALA = 'A sala será orientada no dia do curso, ao chegar ao prédio.';\n\nreturn [{\n  json: {\n    MODO_TESTE,\n    EMAIL_TESTE,\n    DIAS_A_FRENTE,\n    PASTA_DIARIOS_ID,\n    AVISO_SALA\n  }\n}];"
+        "jsCode": "// =========================================================\n// CONFIGURAÇÕES GERAIS — EDITE AQUI PARA TESTES\n// =========================================================\n\n// MODO_TESTE = true  -> NENHUM e-mail vai para alunos/formadores;\n//                       todas as mensagens são redirecionadas para EMAIL_TESTE\n//                       (o assunto mostra quem seria o destinatário real).\n// MODO_TESTE = false -> envio real para os destinatários.\nconst MODO_TESTE = true;\n\n// E-mail que recebe as mensagens quando MODO_TESTE = true\nconst EMAIL_TESTE = 'prof.flavio.spina@gmail.com';\n\n// DIAS_A_FRENTE: quantos dias após a data ATUAL devem ser consultados.\n//   1 = dia seguinte (padrão de produção)\n//   2 = daqui a dois dias, e assim por diante\n//   0 = o próprio dia de hoje (útil para testes)\n// A regra de fim de semana continua valendo: se a data-alvo cair num sábado,\n// a segunda-feira seguinte também entra como data-alvo.\nconst DIAS_A_FRENTE = 1;\n\n// Pasta do Google Drive onde estão os diários (AAAA MM DD NOME DO CURSO DIÁRIO QR FORMAÇÃO)\nconst PASTA_DIARIOS_ID = '1-qF8Yh0oIXE8VJwypPjFkcjET1YCVmya';\n\n// Texto exibido no lugar da sala quando F21:F25 estiver vazio na aba ID\nconst AVISO_SALA = 'A sala será orientada no dia do curso, ao chegar ao prédio.';\n\n// Validação da data da aula na aba FREQUÊNCIA (linha 2):\n// célula onde começam as datas e data sentinela que encerra a varredura.\n// Obs.: a data também é procurada em ID!B21:B25 — quando essas células\n// passarem a ser preenchidas (a partir de outubro), nada precisa mudar aqui.\nconst CELULA_INICIO_DATAS = 'L2';\nconst DATA_SENTINELA = '01/01/2026';\n\nreturn [{\n  json: {\n    MODO_TESTE,\n    EMAIL_TESTE,\n    DIAS_A_FRENTE,\n    PASTA_DIARIOS_ID,\n    AVISO_SALA,\n    CELULA_INICIO_DATAS,\n    DATA_SENTINELA\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -58,7 +58,7 @@
         -4380,
         400
       ],
-      "id": "04e58df6-23c5-4524-ae73-dca8b5830953",
+      "id": "677a1170-4636-49a6-bcb4-e33e8c8a1d18",
       "name": "Config - Variáveis"
     },
     {
@@ -71,7 +71,7 @@
         -4160,
         400
       ],
-      "id": "cce77b31-5032-4333-b940-788af4ad9a78",
+      "id": "15bc6df9-c1e1-45a9-8b65-a1d0a01367ea",
       "name": "Preparar Data Alvo"
     },
     {
@@ -97,7 +97,7 @@
         -3940,
         400
       ],
-      "id": "d5a98af4-e1b6-41ac-ab8c-c3d7f3e2a951",
+      "id": "b25a0246-3a3e-4390-8d05-540228f7f74d",
       "name": "Drive - Listar Diários",
       "credentials": {
         "googleDriveOAuth2Api": {
@@ -116,12 +116,12 @@
         -3720,
         400
       ],
-      "id": "e672793d-016c-410e-bca2-ff03c2f5a557",
+      "id": "34ce4dbd-b3fd-4ed9-84f8-f80d6837f501",
       "name": "Code - Preparar Diários"
     },
     {
       "parameters": {
-        "url": "={{ \"https://sheets.googleapis.com/v4/spreadsheets/\" + $json.spreadsheetId + \"/values:batchGet?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE\" + \"&ranges=\" + encodeURIComponent(\"ID!D4:F8\") + \"&ranges=\" + encodeURIComponent(\"ID!B21:F25\") }}",
+        "url": "={{ \"https://sheets.googleapis.com/v4/spreadsheets/\" + $json.spreadsheetId + \"/values:batchGet?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE\" + \"&ranges=\" + encodeURIComponent(\"ID!D4:F8\") + \"&ranges=\" + encodeURIComponent(\"ID!B21:F25\") + \"&ranges=\" + encodeURIComponent(\"FREQUÊNCIA!\" + $('Config - Variáveis').first().json.CELULA_INICIO_DATAS + \":2\") }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleSheetsOAuth2Api",
         "options": {}
@@ -132,7 +132,7 @@
         -3500,
         400
       ],
-      "id": "01f00430-38e8-48ca-95ab-30b1b2beab92",
+      "id": "9ef54637-7bcf-4b05-91dc-048650b1d9e6",
       "name": "HTTP - Ler Aba ID",
       "onError": "continueRegularOutput",
       "alwaysOutputData": true,
@@ -145,7 +145,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const prep = $('Preparar Data Alvo').first().json;\n\n// Os diários originais, na MESMA ordem em que entraram no nó HTTP\n// (o nó HTTP devolve exatamente um item de resposta por item de entrada).\nconst diarios = $('Code - Preparar Diários').all().map(i => i.json);\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nfunction toDate(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n\n  if (typeof raw === 'number') {\n    const excelEpoch = new Date(Date.UTC(1899, 11, 30));\n    const d = new Date(excelEpoch.getTime() + raw * 86400000);\n    return {\n      ddmmyyyy: `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`,\n      ddmm: `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}`\n    };\n  }\n\n  const str = String(raw).trim();\n  if (!str) return null;\n\n  let m = str.match(/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/);\n  if (m) return { ddmmyyyy: `${pad(m[1])}/${pad(m[2])}/${m[3]}`, ddmm: `${pad(m[1])}/${pad(m[2])}` };\n\n  m = str.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (m) return { ddmmyyyy: `${m[3]}/${m[2]}/${m[1]}`, ddmm: `${m[3]}/${m[2]}` };\n\n  m = str.match(/^(\\d{1,2})\\/(\\d{1,2})$/);\n  if (m) return { ddmmyyyy: '', ddmm: `${pad(m[1])}/${pad(m[2])}` };\n\n  return null;\n}\n\nconst targetsFull = new Set(prep.target_ddmmyyyys || []);\nconst targetsDDMM = new Set((prep.target_ddmmyyyys || []).map(v => v.slice(0, 5)));\n\nconst out = [];\n\nitems.forEach((item, idx) => {\n  const resp = item.json || {};\n  const diario = diarios[idx] || {};\n\n  let erroLeitura = '';\n  if (resp.error) {\n    erroLeitura = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'Erro ao ler a aba ID');\n  }\n\n  // resp.valueRanges[0] = ID!D4:F8  (linha 4 a 8, colunas D..F)\n  // resp.valueRanges[1] = ID!B21:F25 (linha 21 a 25, colunas B..F)\n  const ranges = Array.isArray(resp.valueRanges) ? resp.valueRanges : [];\n  const cab = (ranges[0] && ranges[0].values) || [];\n  const grade = (ranges[1] && ranges[1].values) || [];\n\n  const cell = (g, r, c) => String(((g[r] || [])[c] ?? '')).trim();\n\n  const nomeCurso = cell(cab, 0, 0) || diario.curso_nome;   // D4\n  const cargaHoraria = cell(cab, 0, 1);                     // E4\n  const modalidade = cell(cab, 0, 2);                       // F4\n  const dataInicio = cell(cab, 2, 0);                       // D6\n  const formadoresNomes = cell(cab, 3, 0);                  // D7 (nomes separados por vírgula)\n  const formadoresEmails = cell(cab, 4, 0);                 // D8 (e-mails dos formadores)\n\n  // Procura a(s) data(s)-alvo nas linhas 21..25: B = data, D = horário, F = sala.\n  let matched = '';\n  let horario = '';\n  let sala = '';\n\n  for (const r of grade) {\n    const d = toDate(r && r[0]);\n    if (!d) continue;\n\n    const isAlvo =\n      (d.ddmmyyyy && targetsFull.has(d.ddmmyyyy)) ||\n      (!d.ddmmyyyy && targetsDDMM.has(d.ddmm));\n\n    if (isAlvo) {\n      matched = d.ddmmyyyy || [...targetsFull].find(t => t.startsWith(d.ddmm)) || d.ddmm;\n      horario = String(((r || [])[2] ?? '')).trim(); // coluna D\n      sala = String(((r || [])[4] ?? '')).trim();    // coluna F\n      break;\n    }\n  }\n\n  if (matched) {\n    out.push({\n      json: {\n        spreadsheetId: diario.spreadsheetId,\n        spreadsheetName: diario.spreadsheetName,\n        curso_nome: nomeCurso,\n        TEM_CURSO: true,\n        DATA_MATCH: matched,\n        HORARIO: horario,\n        SALA: sala,\n        CARGA_HORARIA: cargaHoraria,\n        MODALIDADE: modalidade,\n        DATA_INICIO: dataInicio,\n        FORMADORES_NOMES: formadoresNomes,\n        FORMADORES_EMAILS: formadoresEmails,\n        ERRO_LEITURA: erroLeitura\n      }\n    });\n  }\n});\n\nif (!out.length) {\n  return [{\n    json: {\n      TEM_CURSO: false,\n      _motivo: 'Nenhum diário com aula na(s) data(s)-alvo: ' + (prep.target_ddmmyyyys || []).join(', ')\n    }\n  }];\n}\n\nreturn out;"
+        "jsCode": "const prep = $('Preparar Data Alvo').first().json;\nconst cfg = $('Config - Variáveis').first().json;\n\n// Os diários originais, na MESMA ordem em que entraram no nó HTTP\n// (o nó HTTP devolve exatamente um item de resposta por item de entrada).\nconst diarios = $('Code - Preparar Diários').all().map(i => i.json);\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nfunction toDate(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n\n  if (typeof raw === 'number') {\n    const excelEpoch = new Date(Date.UTC(1899, 11, 30));\n    const d = new Date(excelEpoch.getTime() + raw * 86400000);\n    return {\n      ddmmyyyy: `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}`,\n      ddmm: `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}`\n    };\n  }\n\n  const str = String(raw).trim();\n  if (!str) return null;\n\n  let m = str.match(/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/);\n  if (m) return { ddmmyyyy: `${pad(m[1])}/${pad(m[2])}/${m[3]}`, ddmm: `${pad(m[1])}/${pad(m[2])}` };\n\n  m = str.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (m) return { ddmmyyyy: `${m[3]}/${m[2]}/${m[1]}`, ddmm: `${m[3]}/${m[2]}` };\n\n  m = str.match(/^(\\d{1,2})\\/(\\d{1,2})$/);\n  if (m) return { ddmmyyyy: '', ddmm: `${pad(m[1])}/${pad(m[2])}` };\n\n  return null;\n}\n\nconst targetsFull = new Set(prep.target_ddmmyyyys || []);\nconst targetsDDMM = new Set((prep.target_ddmmyyyys || []).map(v => v.slice(0, 5)));\n\nconst out = [];\n\nitems.forEach((item, idx) => {\n  const resp = item.json || {};\n  const diario = diarios[idx] || {};\n\n  let erroLeitura = '';\n  if (resp.error) {\n    erroLeitura = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'Erro ao ler a aba ID');\n  }\n\n  // resp.valueRanges[0] = ID!D4:F8       (linha 4 a 8, colunas D..F)\n  // resp.valueRanges[1] = ID!B21:F25     (linha 21 a 25, colunas B..F)\n  // resp.valueRanges[2] = FREQUÊNCIA!L2:2 (linha 2, a partir da célula configurada)\n  const ranges = Array.isArray(resp.valueRanges) ? resp.valueRanges : [];\n  const cab = (ranges[0] && ranges[0].values) || [];\n  const grade = (ranges[1] && ranges[1].values) || [];\n  const linhaFreq = (ranges[2] && Array.isArray(ranges[2].values) && Array.isArray(ranges[2].values[0]))\n    ? ranges[2].values[0]\n    : [];\n\n  const cell = (g, r, c) => String(((g[r] || [])[c] ?? '')).trim();\n\n  const nomeCurso = cell(cab, 0, 0) || diario.curso_nome;   // D4\n  const cargaHoraria = cell(cab, 0, 1);                     // E4\n  const modalidade = cell(cab, 0, 2);                       // F4\n  const dataInicio = cell(cab, 2, 0);                       // D6\n  const formadoresNomes = cell(cab, 3, 0);                  // D7 (nomes separados por vírgula)\n  const formadoresEmails = cell(cab, 4, 0);                 // D8 (e-mails dos formadores)\n\n  function ehAlvo(d) {\n    return (d.ddmmyyyy && targetsFull.has(d.ddmmyyyy)) ||\n      (!d.ddmmyyyy && targetsDDMM.has(d.ddmm));\n  }\n\n  function dataCompleta(d) {\n    return d.ddmmyyyy || [...targetsFull].find(t => t.startsWith(d.ddmm)) || d.ddmm;\n  }\n\n  // 1) Validação principal (até outubro): linha 2 da aba FREQUÊNCIA,\n  //    a partir da célula configurada, parando na data sentinela.\n  const sentinela = toDate(cfg.DATA_SENTINELA) || { ddmmyyyy: '01/01/2026', ddmm: '01/01' };\n  let matched = '';\n\n  for (const cellRaw of linhaFreq) {\n    const d = toDate(cellRaw);\n    if (!d) continue;\n\n    const isSentinela =\n      (d.ddmmyyyy && sentinela.ddmmyyyy && d.ddmmyyyy === sentinela.ddmmyyyy) ||\n      (!d.ddmmyyyy && d.ddmm === sentinela.ddmm);\n    if (isSentinela) break;\n\n    if (ehAlvo(d)) {\n      matched = dataCompleta(d);\n      break;\n    }\n  }\n\n  // 2) Validação complementar (a partir de outubro): datas em ID!B21:B25.\n  //    Quando a data casa aqui, o horário (D) e a sala (F) vêm da MESMA linha.\n  let horario = '';\n  let sala = '';\n  let linhaFallback = null;\n\n  for (const r of grade) {\n    const temConteudo = String(((r || [])[2] ?? '')).trim() || String(((r || [])[4] ?? '')).trim();\n    if (!linhaFallback && temConteudo) linhaFallback = r; // primeira linha com horário/sala\n\n    const d = toDate(r && r[0]);\n    if (!d) continue;\n\n    if (ehAlvo(d)) {\n      matched = matched || dataCompleta(d);\n      horario = String(((r || [])[2] ?? '')).trim(); // coluna D\n      sala = String(((r || [])[4] ?? '')).trim();    // coluna F\n      linhaFallback = null;                          // já achou a linha exata\n      break;\n    }\n  }\n\n  // Enquanto B21:B25 não tiver as datas, usa o horário/sala da primeira\n  // linha preenchida da grade (ou vazio, que vira o AVISO_SALA adiante).\n  if (matched && !horario && !sala && linhaFallback) {\n    horario = String(((linhaFallback || [])[2] ?? '')).trim();\n    sala = String(((linhaFallback || [])[4] ?? '')).trim();\n  }\n\n  if (matched) {\n    out.push({\n      json: {\n        spreadsheetId: diario.spreadsheetId,\n        spreadsheetName: diario.spreadsheetName,\n        curso_nome: nomeCurso,\n        TEM_CURSO: true,\n        DATA_MATCH: matched,\n        HORARIO: horario,\n        SALA: sala,\n        CARGA_HORARIA: cargaHoraria,\n        MODALIDADE: modalidade,\n        DATA_INICIO: dataInicio,\n        FORMADORES_NOMES: formadoresNomes,\n        FORMADORES_EMAILS: formadoresEmails,\n        ERRO_LEITURA: erroLeitura\n      }\n    });\n  }\n});\n\nif (!out.length) {\n  return [{\n    json: {\n      TEM_CURSO: false,\n      _motivo: 'Nenhum diário com aula na(s) data(s)-alvo: ' + (prep.target_ddmmyyyys || []).join(', ')\n    }\n  }];\n}\n\nreturn out;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -153,7 +153,7 @@
         -3280,
         400
       ],
-      "id": "bd645626-06ae-40e6-ba02-2e5f5fb94ad8",
+      "id": "5071dc05-7fec-4f10-be86-07555b8cfb41",
       "name": "Code - Verificar Datas"
     },
     {
@@ -167,7 +167,7 @@
           },
           "conditions": [
             {
-              "id": "0e28603e-a9a7-47e7-a36c-6c198088638f",
+              "id": "dcee94c8-9c9a-47ee-9662-f0cf44f48062",
               "leftValue": "={{ $json.TEM_CURSO }}",
               "rightValue": "",
               "operator": {
@@ -187,7 +187,7 @@
         -3060,
         400
       ],
-      "id": "5a9cf029-3af2-49e6-858f-3a26266de972",
+      "id": "a3038657-b16a-4e1b-95c4-6df512ca9bbe",
       "name": "IF - Tem Cursos no Dia Alvo?"
     },
     {
@@ -203,7 +203,7 @@
         -2840,
         480
       ],
-      "id": "734e3e82-8012-4c66-9a95-4e3e98ceed3d",
+      "id": "cbeb7c79-ec7a-4612-a860-418327c8190f",
       "name": "HTTP - Ler Alunos (FREQUÊNCIA C3:D)",
       "onError": "continueRegularOutput",
       "alwaysOutputData": true,
@@ -224,7 +224,7 @@
         -2620,
         480
       ],
-      "id": "17e18941-c2c8-4889-9a7f-391e18736868",
+      "id": "6e39b8da-7749-4e75-98aa-fb3580ecc53f",
       "name": "Code - Montar Fila de Envios"
     },
     {
@@ -237,7 +237,7 @@
         -2400,
         480
       ],
-      "id": "3803c90a-9c4e-46e2-afb2-e07930421415",
+      "id": "413f4703-1a33-476c-aa8c-cd2a990bda46",
       "name": "Loop Envios"
     },
     {
@@ -251,7 +251,7 @@
           },
           "conditions": [
             {
-              "id": "ef73b126-89b5-4629-ae0d-5567015f867e",
+              "id": "9a596f5b-1bd3-46d2-8c7a-79253d9997cc",
               "leftValue": "={{ $json.TIPO_ENVIO }}",
               "rightValue": "ALUNO",
               "operator": {
@@ -270,7 +270,7 @@
         -2180,
         560
       ],
-      "id": "f3c57053-a10e-4ea1-ac7d-1e1264f8311c",
+      "id": "d35ab332-48d1-4637-9a6a-835cfc3876ee",
       "name": "IF - Envio para Aluno?"
     },
     {
@@ -284,7 +284,7 @@
           },
           "conditions": [
             {
-              "id": "05f41927-9828-4cd4-b333-20900aef6109",
+              "id": "3b6d8d3f-d5da-4a8b-9039-dbec0f104c82",
               "leftValue": "={{ $json.TIPO_ENVIO }}",
               "rightValue": "FORMADOR",
               "operator": {
@@ -303,7 +303,7 @@
         -1960,
         700
       ],
-      "id": "2ae135ca-32a5-40fe-af09-99b33d0a5d07",
+      "id": "a71bb068-b81c-4bbb-92e3-65c9f880be04",
       "name": "IF - Envio para Formador?"
     },
     {
@@ -322,9 +322,9 @@
         -1960,
         460
       ],
-      "id": "df060ddd-3e42-4530-9562-d2aefaa35b05",
+      "id": "96370036-7024-4ad7-a799-a5c71f444448",
       "name": "Gmail - Enviar Aluno",
-      "webhookId": "1a908428-5fea-4fb2-8172-3839e1ec02fc",
+      "webhookId": "713eb1f5-a95b-4010-83d0-7dfdd536b75b",
       "credentials": {
         "gmailOAuth2": {
           "id": "XWgFO39uPRofIXId",
@@ -345,9 +345,9 @@
         -1740,
         460
       ],
-      "id": "e7036764-9830-4f43-8c9d-94b6b9165358",
+      "id": "af7dfc61-2658-4727-943c-e26146a49ced",
       "name": "Wait Aluno (10s)",
-      "webhookId": "b5e42417-37d3-4b55-b9da-7415fd56869b"
+      "webhookId": "8e0ca727-75e0-4419-aa72-fdf4412c9b50"
     },
     {
       "parameters": {
@@ -365,9 +365,9 @@
         -1740,
         700
       ],
-      "id": "9c5a96e3-cb8e-43fe-8881-df741071759f",
+      "id": "a3969aea-b7f7-4ab0-9909-14e6b30f696f",
       "name": "Gmail - Enviar Formador",
-      "webhookId": "f31faf13-197e-4011-bb66-c1c1f0d90fce",
+      "webhookId": "ec17d659-d17e-486f-8739-10205396a57a",
       "credentials": {
         "gmailOAuth2": {
           "id": "XWgFO39uPRofIXId",
@@ -388,9 +388,9 @@
         -1520,
         700
       ],
-      "id": "7b582faf-026c-46e2-83b1-2c03de37fb25",
+      "id": "545d6a87-1ddf-4032-8041-dcfed699e38c",
       "name": "Wait Formador (5s)",
-      "webhookId": "2ebbb22b-5f6c-447c-91da-6cc237cc7d4a"
+      "webhookId": "7c3b76cb-b67e-4cb4-a304-75421371584f"
     },
     {
       "parameters": {
@@ -402,7 +402,7 @@
         -2180,
         280
       ],
-      "id": "1042b4e5-b644-4f87-9f72-72c11b422768",
+      "id": "de39a06a-f45b-46cd-9daf-085f15129795",
       "name": "Code - Resumo Final"
     }
   ],
