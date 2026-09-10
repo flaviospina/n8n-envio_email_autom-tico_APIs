@@ -1,0 +1,497 @@
+{
+  "name": "CECAPE - Correção curso errado (errata + dados corretos)",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -4600,
+        400
+      ],
+      "id": "1a93b73c-005f-4c44-bb87-046f3363520a",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "content": "## CECAPE — Correção: curso com nome errado (envio duplo)\n\nEnvio pontual para TODOS os alunos do diário configurado em `PLANILHA_ID`:\n1. **Errata/desculpas**: ontem (`DATA_ERRO`) o aviso saiu com o nome de outro curso (`CURSO_ERRADO`) por erro de sistema — já identificado e corrigido.\n2. **Dados corretos**: o aviso normal do curso, com dados da aba ID do próprio diário (D4 curso, E4 carga, F4 modalidade, D6 início, D7 formadores, B21:F25 datas/horários/salas).\n\nOrdem: todas as erratas primeiro, depois todos os avisos corretos.\nAlunos: aba FREQUÊNCIA, C = nome, D = e-mail, a partir da linha 3.\n\n**Antes de rodar**: confira as variáveis no nó \"Config - Variáveis\".\n`MODO_TESTE = true` envia tudo só para `EMAIL_TESTE`. Gatilho apenas MANUAL (sem agendamento).",
+        "height": 480,
+        "width": 620,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4660,
+        -220
+      ],
+      "id": "82eb5773-79b2-4bae-ae05-c1631853cd6b",
+      "name": "Sticky Note - Instruções"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =========================================================\n// CONFIGURAÇÕES — WORKFLOW DE CORREÇÃO (envio duplo)\n// =========================================================\n\n// MODO_TESTE = true  -> tudo é redirecionado para EMAIL_TESTE\n//                       (o assunto mostra quem seria o destinatário real).\n// MODO_TESTE = false -> envio real para os alunos.\nconst MODO_TESTE = true;\n\n// E-mail que recebe as mensagens quando MODO_TESTE = true\nconst EMAIL_TESTE = 'prof.flavio.spina@gmail.com';\n\n// Planilha (diário QR) do curso CORRETO — alunos e dados vêm daqui\nconst PLANILHA_ID = '1-rSlEPzgbtv_C7AXVV1SSWi8r12jaULpzwjyllEcj7s';\n\n// Data em que o e-mail errado foi enviado (aparece no texto da errata)\nconst DATA_ERRO = '09/09/2026';\n\n// Nome do curso ERRADO que apareceu no e-mail de ontem\nconst CURSO_ERRADO = 'Construção colaborativa de Sequências Didáticas de Gênero Textual em interface com o DUA';\n\n// DIAS_A_FRENTE: data da aula mostrada no 2º e-mail (0 = hoje, 1 = amanhã...)\nconst DIAS_A_FRENTE = 0;\n\n// Texto exibido no lugar da sala quando F21:F25 estiver vazio na aba ID\nconst AVISO_SALA = 'A sala será orientada no dia do curso, ao chegar ao prédio.';\n\n// Busca de horário/sala: linha 2 da FREQUÊNCIA + grade ID!B21:F25\nconst CELULA_INICIO_DATAS = 'L2';\nconst DATA_SENTINELA = '01/01/2026';\n\nreturn [{\n  json: {\n    MODO_TESTE,\n    EMAIL_TESTE,\n    PLANILHA_ID,\n    DATA_ERRO,\n    CURSO_ERRADO,\n    DIAS_A_FRENTE,\n    AVISO_SALA,\n    CELULA_INICIO_DATAS,\n    DATA_SENTINELA\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4380,
+        400
+      ],
+      "id": "85204ebd-578e-4399-aec5-18ef10877c60",
+      "name": "Config - Variáveis"
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config - Variáveis').first().json;\nconst tz = 'America/Sao_Paulo';\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nconst dias = Number(cfg.DIAS_A_FRENTE);\nif (!Number.isFinite(dias) || dias < 0) {\n  throw new Error('DIAS_A_FRENTE inválido: use um número inteiro >= 0 (0 = hoje).');\n}\n\nconst now = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));\nconst target = new Date(now);\ntarget.setDate(target.getDate() + Math.trunc(dias));\n\nconst dd = pad(target.getDate());\nconst mm = pad(target.getMonth() + 1);\nconst yyyy = target.getFullYear();\n\nreturn [{\n  json: {\n    hoje: `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`,\n    target_ddmmyyyy: `${dd}/${mm}/${yyyy}`,\n    target_ddmm: `${dd}/${mm}`,\n    weekday: target.toLocaleDateString('pt-BR', { timeZone: tz, weekday: 'long' })\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4160,
+        400
+      ],
+      "id": "4b2fbe2e-411f-4806-a7fb-5018d7a75c0d",
+      "name": "Preparar Data"
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://sheets.googleapis.com/v4/spreadsheets/\" + $('Config - Variáveis').first().json.PLANILHA_ID + \"/values:batchGet?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE\" + \"&ranges=\" + encodeURIComponent(\"ID!D4:F8\") + \"&ranges=\" + encodeURIComponent(\"ID!B21:F25\") + \"&ranges=\" + encodeURIComponent(\"FREQUÊNCIA!\" + $('Config - Variáveis').first().json.CELULA_INICIO_DATAS + \":2\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3940,
+        400
+      ],
+      "id": "4ba69b8b-096c-4973-825f-2806fc0f2a82",
+      "name": "HTTP - Ler Dados do Curso (aba ID)",
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nIfyEUF469O4ic3a",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Config - Variáveis').first().json;\nconst prep = $('Preparar Data').first().json;\n\nconst resp = items[0]?.json || {};\nif (resp.error) {\n  const msg = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'erro desconhecido');\n  throw new Error('Falha ao ler a planilha do curso (' + cfg.PLANILHA_ID + '): ' + msg);\n}\n\n// resp.valueRanges[0] = ID!D4:F8       (linha 4 a 8, colunas D..F)\n// resp.valueRanges[1] = ID!B21:F25     (linha 21 a 25, colunas B..F)\n// resp.valueRanges[2] = FREQUÊNCIA!L2:2 (linha 2, a partir da célula configurada)\nconst ranges = Array.isArray(resp.valueRanges) ? resp.valueRanges : [];\nconst cab = (ranges[0] && ranges[0].values) || [];\nconst grade = (ranges[1] && ranges[1].values) || [];\n\nconst cell = (g, r, c) => String(((g[r] || [])[c] ?? '')).trim();\n\nconst nomeCurso = cell(cab, 0, 0);            // D4\nconst cargaHoraria = cell(cab, 0, 1);         // E4\nconst modalidade = cell(cab, 0, 2);           // F4\nconst dataInicio = cell(cab, 2, 0);           // D6\nconst formadoresNomes = cell(cab, 3, 0);      // D7\n\nif (!nomeCurso) {\n  throw new Error('A célula D4 da aba ID está vazia — não foi possível identificar o nome do curso.');\n}\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nfunction toDate(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n  const str = String(raw).trim();\n  if (!str) return null;\n  let m = str.match(/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/);\n  if (m) return { ddmmyyyy: `${pad(m[1])}/${pad(m[2])}/${m[3]}`, ddmm: `${pad(m[1])}/${pad(m[2])}` };\n  m = str.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (m) return { ddmmyyyy: `${m[3]}/${m[2]}/${m[1]}`, ddmm: `${m[3]}/${m[2]}` };\n  m = str.match(/^(\\d{1,2})\\/(\\d{1,2})$/);\n  if (m) return { ddmmyyyy: '', ddmm: `${pad(m[1])}/${pad(m[2])}` };\n  return null;\n}\n\n// Horário e sala: linha de B21:F25 cuja data é a data-alvo; senão a primeira\n// linha preenchida da grade.\nlet horario = '';\nlet sala = '';\nlet linhaFallback = null;\n\nfor (const r of grade) {\n  const temConteudo = String(((r || [])[2] ?? '')).trim() || String(((r || [])[4] ?? '')).trim();\n  if (!linhaFallback && temConteudo) linhaFallback = r;\n\n  const d = toDate(r && r[0]);\n  if (!d) continue;\n\n  const bate = (d.ddmmyyyy && d.ddmmyyyy === prep.target_ddmmyyyy) ||\n    (!d.ddmmyyyy && d.ddmm === prep.target_ddmm);\n  if (bate) {\n    horario = String(((r || [])[2] ?? '')).trim();\n    sala = String(((r || [])[4] ?? '')).trim();\n    linhaFallback = null;\n    break;\n  }\n}\n\nif (!horario && !sala && linhaFallback) {\n  horario = String(((linhaFallback || [])[2] ?? '')).trim();\n  sala = String(((linhaFallback || [])[4] ?? '')).trim();\n}\n\n// ----- frases dinâmicas conforme a distância entre hoje e a data da aula -----\nfunction parseBR(s) {\n  const m = String(s || '').match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  return m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12, 0, 0) : null;\n}\n\nfunction capitalize(s) {\n  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;\n}\n\nconst alvo = parseBR(prep.target_ddmmyyyy);\nconst hoje = parseBR(prep.hoje);\nconst weekday = alvo ? capitalize(alvo.toLocaleDateString('pt-BR', { weekday: 'long' })) : '';\nconst diff = (alvo && hoje) ? Math.round((alvo - hoje) / 86400000) : null;\nconst masculino = /sábado|domingo/i.test(weekday);\n\nlet fraseAbertura;\nif (diff === 0) fraseAbertura = `Hoje, ${weekday},`;\nelse if (diff === 1) fraseAbertura = `Amanhã, ${weekday},`;\nelse if (diff !== null && diff > 1) {\n  fraseAbertura = masculino\n    ? `No próximo ${weekday}, dia ${prep.target_ddmmyyyy},`\n    : `Na próxima ${weekday}, dia ${prep.target_ddmmyyyy},`;\n} else fraseAbertura = `No dia ${prep.target_ddmmyyyy},`;\n\nfunction splitNomes(s) {\n  return String(s || '')\n    .replace(/\\r\\n?/g, '\\n')\n    .split(/[,;\\n]+/)\n    .map(v => v.trim())\n    .filter(Boolean);\n}\n\nreturn [{\n  json: {\n    CURSO_CORRETO: nomeCurso,\n    CURSO_ERRADO: cfg.CURSO_ERRADO,\n    DATA_ERRO: cfg.DATA_ERRO,\n    DATA: prep.target_ddmmyyyy,\n    DIA_SEMANA: weekday,\n    FRASE_ABERTURA: fraseAbertura,\n    HORARIO: horario,\n    SALA: sala || cfg.AVISO_SALA,\n    CARGA_HORARIA: cargaHoraria,\n    MODALIDADE: modalidade,\n    DATA_INICIO: dataInicio,\n    FORMADORES: splitNomes(formadoresNomes).join(', ')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3720,
+        400
+      ],
+      "id": "380eb798-36bc-453c-a589-cf578af57cde",
+      "name": "Code - Dados do Curso"
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://sheets.googleapis.com/v4/spreadsheets/\" + $('Config - Variáveis').first().json.PLANILHA_ID + \"/values/\" + encodeURIComponent(\"FREQUÊNCIA!C3:D\") + \"?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -3500,
+        400
+      ],
+      "id": "80029236-f3f7-445d-9099-32cac832a5ea",
+      "name": "HTTP - Ler Alunos (FREQUÊNCIA C3:D)",
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nIfyEUF469O4ic3a",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fila única: TODAS as erratas primeiro e, depois delas, TODOS os avisos\n// com os dados corretos — na mesma ordem de alunos.\nconst curso = $('Code - Dados do Curso').first().json;\n\nconst resp = items[0]?.json || {};\nif (resp.error) {\n  const msg = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'erro desconhecido');\n  throw new Error('Falha ao ler os alunos (FREQUÊNCIA C3:D): ' + msg);\n}\n\nconst rows = Array.isArray(resp.values) ? resp.values : [];\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst seen = new Set();\nconst alunos = [];\n\nfor (const r of rows) {\n  const nome = String((r && r[0]) || '').trim();\n  const email = String((r && r[1]) || '').trim().toLowerCase();\n  if (!email || !emailRegex.test(email)) continue;\n  if (seen.has(email)) continue;\n  seen.add(email);\n  alunos.push({ NOME: nome || email, EMAIL_ALUNO: email });\n}\n\nif (!alunos.length) {\n  return [{\n    json: {\n      TIPO_ENVIO: 'NENHUM',\n      _motivo: 'Nenhum aluno com e-mail válido nas colunas C/D da aba FREQUÊNCIA.'\n    }\n  }];\n}\n\nconst fila = [];\nfor (const a of alunos) {\n  fila.push({ json: { ...curso, ...a, TIPO_ENVIO: 'DESCULPAS' } });\n}\nfor (const a of alunos) {\n  fila.push({ json: { ...curso, ...a, TIPO_ENVIO: 'DADOS' } });\n}\n\nreturn fila.map((f, i) => ({ json: { ...f.json, ORDEM: i + 1, TOTAL_FILA: fila.length } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3280,
+        400
+      ],
+      "id": "63aba321-2930-4b6a-970b-6d29c748e8dc",
+      "name": "Code - Montar Fila de Envios"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -3060,
+        400
+      ],
+      "id": "6e2888f9-433a-4ae8-8b2b-2022e8dc0765",
+      "name": "Loop Envios"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "05440e80-b156-4cc0-8da9-a7d5a10be985",
+              "leftValue": "={{ $json.TIPO_ENVIO }}",
+              "rightValue": "DESCULPAS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2840,
+        480
+      ],
+      "id": "ff795d4e-eefc-458d-813a-98b16c93a3dc",
+      "name": "IF - E-mail de Desculpas?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8382d5a6-b7d8-4e35-ae78-3ae1f0d69275",
+              "leftValue": "={{ $json.TIPO_ENVIO }}",
+              "rightValue": "DADOS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2620,
+        620
+      ],
+      "id": "2969f532-2298-4136-ad15-91c4fdf9eaa2",
+      "name": "IF - E-mail de Dados Corretos?"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Config - Variáveis').first().json.MODO_TESTE ? $('Config - Variáveis').first().json.EMAIL_TESTE : $json.EMAIL_ALUNO }}",
+        "subject": "={{ ($('Config - Variáveis').first().json.MODO_TESTE ? '[TESTE p/ ' + $json.EMAIL_ALUNO + '] ' : '') + 'Errata CECAPE • ' + $json.CURSO_CORRETO }}",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; background-color: #28b1d4; margin: 0; padding: 20px; }\n    .container { width: 100%; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; }\n\n    .header { background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 4px solid #00accf; }\n    .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n    .header-table td { width: 50%; text-align: center; vertical-align: middle; padding: 10px; }\n\n    .header-table img { width: 100%; max-width: 180px; height: auto; display: inline-block; }\n\n    .content { padding: 35px; background-color: #ffffff; }\n    .card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 5px solid #00accf; margin: 20px 0; }\n\n    .info-label { font-weight: bold; color: #00accf; text-transform: uppercase; font-size: 12px; display: block; }\n\n    h2 { color: #00accf; margin-top: 0; font-size: 22px; text-align: center; }\n\n    .footer { background-color: #00accf; color: #ffffff; text-align: center; padding: 20px; font-size: 13px; font-weight: 300; }\n\n    .no-reply {\n      margin-top: 20px;\n      padding: 15px;\n      background-color: #fff3cd;\n      border: 1px solid #ffeeba;\n      border-radius: 8px;\n      color: #856404;\n      font-size: 13px;\n      text-align: center;\n    }\n\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <table class=\"header-table\">\n        <tr>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-seeduc.png\" alt=\"SEEDUC\"></td>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-cecape.png\" alt=\"CECAPE\"></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"content\">\n      <h2>Olá, <strong>{{ $json[\"NOME\"] }}</strong>!</h2>\n\n      <p>\n        Ontem, dia <strong>{{ $json.DATA_ERRO }}</strong>, enviamos um e-mail aos alunos do curso\n        <strong>{{ $json.CURSO_CORRETO }}</strong> contendo, por um erro de sistema, o nome de outro curso:\n      </p>\n\n      <div class=\"card\">\n        <p><em>{{ $json.CURSO_ERRADO }}</em></p>\n      </div>\n\n      <p>\n        O erro já foi identificado e corrigido. <strong>Pedimos desculpas pelo ocorrido</strong> e\n        estamos à disposição para corrigir eventuais problemas que possam surgir.\n      </p>\n\n      <p>\n        Em instantes você receberá um novo e-mail com os <strong>dados corretos</strong> do seu curso.\n      </p>\n\n      <!-- Aviso de mensagem automática -->\n      <div class=\"no-reply\">\n        ⚠️ Esta é uma mensagem automática enviada pelo sistema do CECAPE.<br>\n        Por favor, não responda este e-mail, pois esta caixa de entrada não é monitorada.\n      </div>\n\n    </div>\n\n    <div class=\"footer\">\n      CECAPE - Centro de Capacitação de Profissionais da Educação<br>\n      Secretaria Municipal de Educação de São Caetano do Sul\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "CECAPE - SEEDUC"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -2620,
+        380
+      ],
+      "id": "764f145d-818f-41b4-977d-0b8bb7e2b2b8",
+      "name": "Gmail - Errata/Desculpas",
+      "webhookId": "220c6f2c-bda8-4b71-89ff-e280eb1319bf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "XWgFO39uPRofIXId",
+          "name": "Gmail account 2"
+        }
+      },
+      "continueOnFail": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -2400,
+        380
+      ],
+      "id": "6c589263-3b0b-4781-83f7-f51ada4c6377",
+      "name": "Wait Errata (10s)",
+      "webhookId": "9119f0bc-8e8e-43e1-aa2b-1efdffdb9160"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Config - Variáveis').first().json.MODO_TESTE ? $('Config - Variáveis').first().json.EMAIL_TESTE : $json.EMAIL_ALUNO }}",
+        "subject": "={{ ($('Config - Variáveis').first().json.MODO_TESTE ? '[TESTE p/ ' + $json.EMAIL_ALUNO + '] ' : '') + 'Aviso CECAPE • ' + $json.CURSO_CORRETO + ' • Dia ' + $json.DATA }}",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; background-color: #28b1d4; margin: 0; padding: 20px; }\n    .container { width: 100%; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; }\n\n    .header { background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 4px solid #00accf; }\n    .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n    .header-table td { width: 50%; text-align: center; vertical-align: middle; padding: 10px; }\n\n    .header-table img { width: 100%; max-width: 180px; height: auto; display: inline-block; }\n\n    .content { padding: 35px; background-color: #ffffff; }\n    .card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 5px solid #00accf; margin: 20px 0; }\n\n    .info-label { font-weight: bold; color: #00accf; text-transform: uppercase; font-size: 12px; display: block; }\n\n    h2 { color: #00accf; margin-top: 0; font-size: 22px; text-align: center; }\n\n    .footer { background-color: #00accf; color: #ffffff; text-align: center; padding: 20px; font-size: 13px; font-weight: 300; }\n\n    .no-reply {\n      margin-top: 20px;\n      padding: 15px;\n      background-color: #fff3cd;\n      border: 1px solid #ffeeba;\n      border-radius: 8px;\n      color: #856404;\n      font-size: 13px;\n      text-align: center;\n    }\n\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <table class=\"header-table\">\n        <tr>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-seeduc.png\" alt=\"SEEDUC\"></td>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-cecape.png\" alt=\"CECAPE\"></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"content\">\n      <h2>Olá, <strong>{{ $json[\"NOME\"] }}</strong>!</h2>\n      <p>\n        {{ $json.FRASE_ABERTURA }} teremos um compromisso importante no CECAPE!\n        <br>\n        Seguem os dados <strong>corretos</strong> do seu curso:\n      </p>\n\n      <div class=\"card\">\n        <p><span class=\"info-label\">Data:</span> {{ $json[\"DATA\"] }}</p>\n        <p><span class=\"info-label\">Sala/Local:</span> {{ $json.SALA }}</p>\n        <p><span class=\"info-label\">Horário:</span> {{ $json.HORARIO }}</p>\n        <p><span class=\"info-label\">Curso:</span> {{ $json.CURSO_CORRETO }} </p>\n        <p><span class=\"info-label\">Formador(es):</span> {{ $json[\"FORMADORES\"] }}</p>\n        <p><span class=\"info-label\">Carga horária:</span> {{ $json.CARGA_HORARIA }}</p>\n        <p><span class=\"info-label\">Modalidade:</span> {{ $json.MODALIDADE }}</p>\n        <p><span class=\"info-label\">Início do curso:</span> {{ $json.DATA_INICIO }}</p>\n      </div>\n\n      <p style=\"margin-top: 20px;\">\n        Caso algum dado esteja incorreto, por favor, entre em contato com a secretaria.\n      </p>\n\n      <!-- Aviso de mensagem automática -->\n      <div class=\"no-reply\">\n        ⚠️ Esta é uma mensagem automática enviada pelo sistema do CECAPE.<br>\n        Por favor, não responda este e-mail, pois esta caixa de entrada não é monitorada.\n      </div>\n\n    </div>\n\n    <div class=\"footer\">\n      CECAPE - Centro de Capacitação de Profissionais da Educação<br>\n      Secretaria Municipal de Educação de São Caetano do Sul\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "CECAPE - SEEDUC"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -2400,
+        620
+      ],
+      "id": "110d6f8a-5b34-4555-a085-c621cb2cbfb7",
+      "name": "Gmail - Dados Corretos",
+      "webhookId": "e132c4dd-da1f-4fae-ab51-35d966f929a4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "XWgFO39uPRofIXId",
+          "name": "Gmail account 2"
+        }
+      },
+      "continueOnFail": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -2180,
+        620
+      ],
+      "id": "ba27e9b7-7337-4bc6-9b2a-4fdd2d83033b",
+      "name": "Wait Dados (10s)",
+      "webhookId": "3fb4f778-2385-45d7-ad75-a5d3b77c0a55"
+    },
+    {
+      "parameters": {
+        "jsCode": "let fila = [];\ntry {\n  fila = $('Code - Montar Fila de Envios').all().map(i => i.json);\n} catch (e) {\n  fila = [];\n}\n\nconst desculpas = fila.filter(f => f.TIPO_ENVIO === 'DESCULPAS').length;\nconst dados = fila.filter(f => f.TIPO_ENVIO === 'DADOS').length;\n\nreturn [{\n  json: {\n    status: (desculpas + dados) ? 'CONCLUIDO' : 'SEM_ENVIOS',\n    emails_desculpas: desculpas,\n    emails_dados_corretos: dados,\n    mensagem: (desculpas + dados)\n      ? 'Correção enviada: primeiro as erratas, depois os avisos com os dados corretos.'\n      : 'Nenhum aluno com e-mail válido encontrado.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2840,
+        240
+      ],
+      "id": "53ac7ecc-596c-465d-abb6-a2b51af749d2",
+      "name": "Code - Resumo Final"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Config - Variáveis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config - Variáveis": {
+      "main": [
+        [
+          {
+            "node": "Preparar Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Ler Dados do Curso (aba ID)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Ler Dados do Curso (aba ID)": {
+      "main": [
+        [
+          {
+            "node": "Code - Dados do Curso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Dados do Curso": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Ler Alunos (FREQUÊNCIA C3:D)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Ler Alunos (FREQUÊNCIA C3:D)": {
+      "main": [
+        [
+          {
+            "node": "Code - Montar Fila de Envios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Montar Fila de Envios": {
+      "main": [
+        [
+          {
+            "node": "Loop Envios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Envios": {
+      "main": [
+        [
+          {
+            "node": "Code - Resumo Final",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - E-mail de Desculpas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - E-mail de Desculpas?": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Errata/Desculpas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - E-mail de Dados Corretos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - E-mail de Dados Corretos?": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Dados Corretos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Envios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Errata/Desculpas": {
+      "main": [
+        [
+          {
+            "node": "Wait Errata (10s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Errata (10s)": {
+      "main": [
+        [
+          {
+            "node": "Loop Envios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Dados Corretos": {
+      "main": [
+        [
+          {
+            "node": "Wait Dados (10s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Dados (10s)": {
+      "main": [
+        [
+          {
+            "node": "Loop Envios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9064fe32635d2fcaca845aac95e526c58baa32ac68be71412291cb0f1d193974"
+  },
+  "tags": []
+}
