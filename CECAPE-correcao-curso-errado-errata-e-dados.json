@@ -9,28 +9,28 @@
         -4600,
         400
       ],
-      "id": "1a93b73c-005f-4c44-bb87-046f3363520a",
+      "id": "fff9b6b2-857a-4449-9c40-e644e52cec13",
       "name": "When clicking ‘Execute workflow’"
     },
     {
       "parameters": {
-        "content": "## CECAPE — Correção: curso com nome errado (envio duplo)\n\nEnvio pontual para TODOS os alunos do diário configurado em `PLANILHA_ID`:\n1. **Errata/desculpas**: ontem (`DATA_ERRO`) o aviso saiu com o nome de outro curso (`CURSO_ERRADO`) por erro de sistema — já identificado e corrigido.\n2. **Dados corretos**: o aviso normal do curso, com dados da aba ID do próprio diário (D4 curso, E4 carga, F4 modalidade, D6 início, D7 formadores, B21:F25 datas/horários/salas).\n\nOrdem: todas as erratas primeiro, depois todos os avisos corretos.\nAlunos: aba FREQUÊNCIA, C = nome, D = e-mail, a partir da linha 3.\n\n**Antes de rodar**: confira as variáveis no nó \"Config - Variáveis\".\n`MODO_TESTE = true` envia tudo só para `EMAIL_TESTE`. Gatilho apenas MANUAL (sem agendamento).",
-        "height": 480,
-        "width": 620,
+        "content": "## CECAPE — Correção: curso com nome errado (errata + dados + formadores)\n\nEnvio pontual para o diário configurado em `PLANILHA_ID`, na ordem:\n1. **Errata/desculpas** para todos os alunos (aviso de `DATA_ERRO` saiu com o curso `CURSO_ERRADO` por erro de sistema — já corrigido).\n2. **Dados corretos** do curso para todos os alunos.\n3. **Formadores**: aviso de que os alunos receberam a confirmação do curso.\n\nFontes: aba ID do diário (curso, carga, modalidade, início, formadores D7/D8, horário/sala B21:F25) + agenda mensal (`AGENDA_SHEET_ID`, aba `AGENDA_ABA`, ex.: SETEMBRO) com prioridade para sala (ESPAÇO), horário (INÍCIO/TÉRMINO), Etapas, Formato e Google Sala de Aula — linha localizada por DATA + semelhança do TÍTULO.\nAlunos: aba FREQUÊNCIA, C = nome, D = e-mail, linha 3+.\n\n**Antes de rodar**: confira o nó \"Config - Variáveis\".\n`MODO_TESTE = true` envia tudo só para `EMAIL_TESTE`. Gatilho apenas MANUAL.",
+        "height": 520,
+        "width": 640,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -4660,
-        -220
+        -280
       ],
-      "id": "82eb5773-79b2-4bae-ae05-c1631853cd6b",
+      "id": "dcdc6c2f-13bb-4395-84a1-75a3505fafa2",
       "name": "Sticky Note - Instruções"
     },
     {
       "parameters": {
-        "jsCode": "// =========================================================\n// CONFIGURAÇÕES — WORKFLOW DE CORREÇÃO (envio duplo)\n// =========================================================\n\n// MODO_TESTE = true  -> tudo é redirecionado para EMAIL_TESTE\n//                       (o assunto mostra quem seria o destinatário real).\n// MODO_TESTE = false -> envio real para os alunos.\nconst MODO_TESTE = true;\n\n// E-mail que recebe as mensagens quando MODO_TESTE = true\nconst EMAIL_TESTE = 'prof.flavio.spina@gmail.com';\n\n// Planilha (diário QR) do curso CORRETO — alunos e dados vêm daqui\nconst PLANILHA_ID = '1-rSlEPzgbtv_C7AXVV1SSWi8r12jaULpzwjyllEcj7s';\n\n// Data em que o e-mail errado foi enviado (aparece no texto da errata)\nconst DATA_ERRO = '09/09/2026';\n\n// Nome do curso ERRADO que apareceu no e-mail de ontem\nconst CURSO_ERRADO = 'Construção colaborativa de Sequências Didáticas de Gênero Textual em interface com o DUA';\n\n// DIAS_A_FRENTE: data da aula mostrada no 2º e-mail (0 = hoje, 1 = amanhã...)\nconst DIAS_A_FRENTE = 0;\n\n// Texto exibido no lugar da sala quando F21:F25 estiver vazio na aba ID\nconst AVISO_SALA = 'A sala será orientada no dia do curso, ao chegar ao prédio.';\n\n// Busca de horário/sala: linha 2 da FREQUÊNCIA + grade ID!B21:F25\nconst CELULA_INICIO_DATAS = 'L2';\nconst DATA_SENTINELA = '01/01/2026';\n\nreturn [{\n  json: {\n    MODO_TESTE,\n    EMAIL_TESTE,\n    PLANILHA_ID,\n    DATA_ERRO,\n    CURSO_ERRADO,\n    DIAS_A_FRENTE,\n    AVISO_SALA,\n    CELULA_INICIO_DATAS,\n    DATA_SENTINELA\n  }\n}];"
+        "jsCode": "// =========================================================\n// CONFIGURAÇÕES — WORKFLOW DE CORREÇÃO (errata + dados + formadores)\n// =========================================================\n\n// MODO_TESTE = true  -> tudo é redirecionado para EMAIL_TESTE\n//                       (o assunto mostra quem seria o destinatário real).\n// MODO_TESTE = false -> envio real para alunos e formadores.\nconst MODO_TESTE = true;\n\n// E-mail que recebe as mensagens quando MODO_TESTE = true\nconst EMAIL_TESTE = 'prof.flavio.spina@gmail.com';\n\n// Planilha (diário QR) do curso CORRETO — alunos e dados vêm daqui\nconst PLANILHA_ID = '1-rSlEPzgbtv_C7AXVV1SSWi8r12jaULpzwjyllEcj7s';\n\n// Agenda mensal com sala e demais informações do curso\nconst AGENDA_SHEET_ID = '11_isrdRYiew08xo7rZyBqx1YkvyfR7IRmrHui37x768';\n\n// Aba da agenda a consultar. Vazio ('') = automática, pelo mês da data da\n// aula em maiúsculas (ex.: SETEMBRO). Preencha para forçar uma aba específica.\nconst AGENDA_ABA = 'SETEMBRO';\n\n// Data em que o e-mail errado foi enviado (aparece no texto da errata)\nconst DATA_ERRO = '09/09/2026';\n\n// Nome do curso ERRADO que apareceu no e-mail enviado por engano\nconst CURSO_ERRADO = 'Construção colaborativa de Sequências Didáticas de Gênero Textual em interface com o DUA';\n\n// DIAS_A_FRENTE: data da aula mostrada nos e-mails (0 = hoje, 1 = amanhã...)\nconst DIAS_A_FRENTE = 0;\n\n// Texto exibido no lugar da sala quando nem a agenda nem a aba ID informarem\nconst AVISO_SALA = 'A sala será orientada no dia do curso, ao chegar ao prédio.';\n\nreturn [{\n  json: {\n    MODO_TESTE,\n    EMAIL_TESTE,\n    PLANILHA_ID,\n    AGENDA_SHEET_ID,\n    AGENDA_ABA,\n    DATA_ERRO,\n    CURSO_ERRADO,\n    DIAS_A_FRENTE,\n    AVISO_SALA\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -38,12 +38,12 @@
         -4380,
         400
       ],
-      "id": "85204ebd-578e-4399-aec5-18ef10877c60",
+      "id": "74da3157-1ce6-4f0a-9ff2-07846feb7b04",
       "name": "Config - Variáveis"
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Config - Variáveis').first().json;\nconst tz = 'America/Sao_Paulo';\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nconst dias = Number(cfg.DIAS_A_FRENTE);\nif (!Number.isFinite(dias) || dias < 0) {\n  throw new Error('DIAS_A_FRENTE inválido: use um número inteiro >= 0 (0 = hoje).');\n}\n\nconst now = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));\nconst target = new Date(now);\ntarget.setDate(target.getDate() + Math.trunc(dias));\n\nconst dd = pad(target.getDate());\nconst mm = pad(target.getMonth() + 1);\nconst yyyy = target.getFullYear();\n\nreturn [{\n  json: {\n    hoje: `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`,\n    target_ddmmyyyy: `${dd}/${mm}/${yyyy}`,\n    target_ddmm: `${dd}/${mm}`,\n    weekday: target.toLocaleDateString('pt-BR', { timeZone: tz, weekday: 'long' })\n  }\n}];"
+        "jsCode": "const cfg = $('Config - Variáveis').first().json;\nconst tz = 'America/Sao_Paulo';\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nconst dias = Number(cfg.DIAS_A_FRENTE);\nif (!Number.isFinite(dias) || dias < 0) {\n  throw new Error('DIAS_A_FRENTE inválido: use um número inteiro >= 0 (0 = hoje).');\n}\n\nconst now = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));\nconst target = new Date(now);\ntarget.setDate(target.getDate() + Math.trunc(dias));\n\nconst dd = pad(target.getDate());\nconst mm = pad(target.getMonth() + 1);\nconst yyyy = target.getFullYear();\n\nconst mesNome = target.toLocaleDateString('pt-BR', { timeZone: tz, month: 'long' });\n\nreturn [{\n  json: {\n    hoje: `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`,\n    target_ddmmyyyy: `${dd}/${mm}/${yyyy}`,\n    target_ddmm: `${dd}/${mm}`,\n    target_dia: dd,\n    mes_aba: mesNome.toUpperCase(),\n    weekday: target.toLocaleDateString('pt-BR', { timeZone: tz, weekday: 'long' })\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -51,12 +51,56 @@
         -4160,
         400
       ],
-      "id": "4b2fbe2e-411f-4806-a7fb-5018d7a75c0d",
+      "id": "05edc345-e2b8-4d41-88a0-ea87a5188969",
       "name": "Preparar Data"
     },
     {
       "parameters": {
-        "url": "={{ \"https://sheets.googleapis.com/v4/spreadsheets/\" + $('Config - Variáveis').first().json.PLANILHA_ID + \"/values:batchGet?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE\" + \"&ranges=\" + encodeURIComponent(\"ID!D4:F8\") + \"&ranges=\" + encodeURIComponent(\"ID!B21:F25\") + \"&ranges=\" + encodeURIComponent(\"FREQUÊNCIA!\" + $('Config - Variáveis').first().json.CELULA_INICIO_DATAS + \":2\") }}",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Config - Variáveis').first().json.AGENDA_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Config - Variáveis').first().json.AGENDA_ABA || $('Preparar Data').first().json.mes_aba }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -3940,
+        400
+      ],
+      "id": "8dd51fcc-fe83-46c9-bd93-b1d20b7876d5",
+      "name": "Sheets - Agenda Mensal",
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nIfyEUF469O4ic3a",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtra as linhas da agenda cuja DATA é a data da aula e empacota em UM item.\nconst prep = $('Preparar Data').first().json;\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nfunction normalizeDateValue(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n\n  if (typeof raw === 'number') {\n    const excelEpoch = new Date(Date.UTC(1899, 11, 30));\n    const date = new Date(excelEpoch.getTime() + raw * 86400000);\n    return {\n      ddmmyyyy: `${pad(date.getUTCDate())}/${pad(date.getUTCMonth() + 1)}/${date.getUTCFullYear()}`,\n      day: pad(date.getUTCDate())\n    };\n  }\n\n  const str = String(raw).trim();\n  if (!str) return null;\n\n  let m = str.match(/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/);\n  if (m) return { ddmmyyyy: `${pad(m[1])}/${pad(m[2])}/${m[3]}`, day: pad(m[1]) };\n\n  m = str.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (m) return { ddmmyyyy: `${m[3]}/${m[2]}/${m[1]}`, day: m[3] };\n\n  m = str.match(/^\\d{1,2}$/);\n  if (m) return { ddmmyyyy: '', day: pad(str) };\n\n  return null;\n}\n\nconst agenda = [];\n\nfor (const item of items) {\n  const row = item.json || {};\n  const parsed = normalizeDateValue(row['DATA'] ?? row['Data'] ?? row['data']);\n  if (!parsed) continue;\n\n  const bate = (parsed.ddmmyyyy && parsed.ddmmyyyy === prep.target_ddmmyyyy) ||\n    (!parsed.ddmmyyyy && parsed.day === prep.target_dia);\n  if (!bate) continue;\n\n  agenda.push(row);\n}\n\nreturn [{ json: { _agenda: agenda, _agendaCount: agenda.length } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3720,
+        400
+      ],
+      "id": "45d35a9f-3481-4fb6-866f-d59c6d42c4a8",
+      "name": "Code - Agenda do Dia"
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://sheets.googleapis.com/v4/spreadsheets/\" + $('Config - Variáveis').first().json.PLANILHA_ID + \"/values:batchGet?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE\" + \"&ranges=\" + encodeURIComponent(\"ID!D4:F8\") + \"&ranges=\" + encodeURIComponent(\"ID!B21:F25\") }}",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleSheetsOAuth2Api",
         "options": {}
@@ -64,10 +108,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -3940,
+        -3500,
         400
       ],
-      "id": "4ba69b8b-096c-4973-825f-2806fc0f2a82",
+      "id": "6904c974-3341-44f5-8a85-47189af54e22",
       "name": "HTTP - Ler Dados do Curso (aba ID)",
       "onError": "continueRegularOutput",
       "alwaysOutputData": true,
@@ -80,15 +124,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const cfg = $('Config - Variáveis').first().json;\nconst prep = $('Preparar Data').first().json;\n\nconst resp = items[0]?.json || {};\nif (resp.error) {\n  const msg = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'erro desconhecido');\n  throw new Error('Falha ao ler a planilha do curso (' + cfg.PLANILHA_ID + '): ' + msg);\n}\n\n// resp.valueRanges[0] = ID!D4:F8       (linha 4 a 8, colunas D..F)\n// resp.valueRanges[1] = ID!B21:F25     (linha 21 a 25, colunas B..F)\n// resp.valueRanges[2] = FREQUÊNCIA!L2:2 (linha 2, a partir da célula configurada)\nconst ranges = Array.isArray(resp.valueRanges) ? resp.valueRanges : [];\nconst cab = (ranges[0] && ranges[0].values) || [];\nconst grade = (ranges[1] && ranges[1].values) || [];\n\nconst cell = (g, r, c) => String(((g[r] || [])[c] ?? '')).trim();\n\nconst nomeCurso = cell(cab, 0, 0);            // D4\nconst cargaHoraria = cell(cab, 0, 1);         // E4\nconst modalidade = cell(cab, 0, 2);           // F4\nconst dataInicio = cell(cab, 2, 0);           // D6\nconst formadoresNomes = cell(cab, 3, 0);      // D7\n\nif (!nomeCurso) {\n  throw new Error('A célula D4 da aba ID está vazia — não foi possível identificar o nome do curso.');\n}\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nfunction toDate(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n  const str = String(raw).trim();\n  if (!str) return null;\n  let m = str.match(/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/);\n  if (m) return { ddmmyyyy: `${pad(m[1])}/${pad(m[2])}/${m[3]}`, ddmm: `${pad(m[1])}/${pad(m[2])}` };\n  m = str.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (m) return { ddmmyyyy: `${m[3]}/${m[2]}/${m[1]}`, ddmm: `${m[3]}/${m[2]}` };\n  m = str.match(/^(\\d{1,2})\\/(\\d{1,2})$/);\n  if (m) return { ddmmyyyy: '', ddmm: `${pad(m[1])}/${pad(m[2])}` };\n  return null;\n}\n\n// Horário e sala: linha de B21:F25 cuja data é a data-alvo; senão a primeira\n// linha preenchida da grade.\nlet horario = '';\nlet sala = '';\nlet linhaFallback = null;\n\nfor (const r of grade) {\n  const temConteudo = String(((r || [])[2] ?? '')).trim() || String(((r || [])[4] ?? '')).trim();\n  if (!linhaFallback && temConteudo) linhaFallback = r;\n\n  const d = toDate(r && r[0]);\n  if (!d) continue;\n\n  const bate = (d.ddmmyyyy && d.ddmmyyyy === prep.target_ddmmyyyy) ||\n    (!d.ddmmyyyy && d.ddmm === prep.target_ddmm);\n  if (bate) {\n    horario = String(((r || [])[2] ?? '')).trim();\n    sala = String(((r || [])[4] ?? '')).trim();\n    linhaFallback = null;\n    break;\n  }\n}\n\nif (!horario && !sala && linhaFallback) {\n  horario = String(((linhaFallback || [])[2] ?? '')).trim();\n  sala = String(((linhaFallback || [])[4] ?? '')).trim();\n}\n\n// ----- frases dinâmicas conforme a distância entre hoje e a data da aula -----\nfunction parseBR(s) {\n  const m = String(s || '').match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  return m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12, 0, 0) : null;\n}\n\nfunction capitalize(s) {\n  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;\n}\n\nconst alvo = parseBR(prep.target_ddmmyyyy);\nconst hoje = parseBR(prep.hoje);\nconst weekday = alvo ? capitalize(alvo.toLocaleDateString('pt-BR', { weekday: 'long' })) : '';\nconst diff = (alvo && hoje) ? Math.round((alvo - hoje) / 86400000) : null;\nconst masculino = /sábado|domingo/i.test(weekday);\n\nlet fraseAbertura;\nif (diff === 0) fraseAbertura = `Hoje, ${weekday},`;\nelse if (diff === 1) fraseAbertura = `Amanhã, ${weekday},`;\nelse if (diff !== null && diff > 1) {\n  fraseAbertura = masculino\n    ? `No próximo ${weekday}, dia ${prep.target_ddmmyyyy},`\n    : `Na próxima ${weekday}, dia ${prep.target_ddmmyyyy},`;\n} else fraseAbertura = `No dia ${prep.target_ddmmyyyy},`;\n\nfunction splitNomes(s) {\n  return String(s || '')\n    .replace(/\\r\\n?/g, '\\n')\n    .split(/[,;\\n]+/)\n    .map(v => v.trim())\n    .filter(Boolean);\n}\n\nreturn [{\n  json: {\n    CURSO_CORRETO: nomeCurso,\n    CURSO_ERRADO: cfg.CURSO_ERRADO,\n    DATA_ERRO: cfg.DATA_ERRO,\n    DATA: prep.target_ddmmyyyy,\n    DIA_SEMANA: weekday,\n    FRASE_ABERTURA: fraseAbertura,\n    HORARIO: horario,\n    SALA: sala || cfg.AVISO_SALA,\n    CARGA_HORARIA: cargaHoraria,\n    MODALIDADE: modalidade,\n    DATA_INICIO: dataInicio,\n    FORMADORES: splitNomes(formadoresNomes).join(', ')\n  }\n}];"
+        "jsCode": "const cfg = $('Config - Variáveis').first().json;\nconst prep = $('Preparar Data').first().json;\nconst agenda = ($('Code - Agenda do Dia').first().json._agenda) || [];\n\nconst resp = items[0]?.json || {};\nif (resp.error) {\n  const msg = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'erro desconhecido');\n  throw new Error('Falha ao ler a planilha do curso (' + cfg.PLANILHA_ID + '): ' + msg);\n}\n\n// resp.valueRanges[0] = ID!D4:F8   | resp.valueRanges[1] = ID!B21:F25\nconst ranges = Array.isArray(resp.valueRanges) ? resp.valueRanges : [];\nconst cab = (ranges[0] && ranges[0].values) || [];\nconst grade = (ranges[1] && ranges[1].values) || [];\n\nconst cell = (g, r, c) => String(((g[r] || [])[c] ?? '')).trim();\n\nconst nomeCurso = cell(cab, 0, 0);            // D4\nconst cargaHoraria = cell(cab, 0, 1);         // E4\nconst modalidade = cell(cab, 0, 2);           // F4\nconst dataInicio = cell(cab, 2, 0);           // D6\nconst formadoresNomesRaw = cell(cab, 3, 0);   // D7\nconst formadoresEmailsRaw = cell(cab, 4, 0);  // D8\n\nif (!nomeCurso) {\n  throw new Error('A célula D4 da aba ID está vazia — não foi possível identificar o nome do curso.');\n}\n\nfunction pad(v) {\n  return String(v).padStart(2, '0');\n}\n\nfunction toDate(raw) {\n  if (raw === null || raw === undefined || raw === '') return null;\n  const str = String(raw).trim();\n  if (!str) return null;\n  let m = str.match(/(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/);\n  if (m) return { ddmmyyyy: `${pad(m[1])}/${pad(m[2])}/${m[3]}`, ddmm: `${pad(m[1])}/${pad(m[2])}` };\n  m = str.match(/(\\d{4})-(\\d{2})-(\\d{2})/);\n  if (m) return { ddmmyyyy: `${m[3]}/${m[2]}/${m[1]}`, ddmm: `${m[3]}/${m[2]}` };\n  m = str.match(/^(\\d{1,2})\\/(\\d{1,2})$/);\n  if (m) return { ddmmyyyy: '', ddmm: `${pad(m[1])}/${pad(m[2])}` };\n  return null;\n}\n\n// ----- horário/sala pela grade ID!B21:F25 (linha da data, senão 1ª preenchida) -----\nlet horarioGrade = '';\nlet salaGrade = '';\nlet linhaFallback = null;\n\nfor (const r of grade) {\n  const temConteudo = String(((r || [])[2] ?? '')).trim() || String(((r || [])[4] ?? '')).trim();\n  if (!linhaFallback && temConteudo) linhaFallback = r;\n\n  const d = toDate(r && r[0]);\n  if (!d) continue;\n\n  const bate = (d.ddmmyyyy && d.ddmmyyyy === prep.target_ddmmyyyy) ||\n    (!d.ddmmyyyy && d.ddmm === prep.target_ddmm);\n  if (bate) {\n    horarioGrade = String(((r || [])[2] ?? '')).trim();\n    salaGrade = String(((r || [])[4] ?? '')).trim();\n    linhaFallback = null;\n    break;\n  }\n}\n\nif (!horarioGrade && !salaGrade && linhaFallback) {\n  horarioGrade = String(((linhaFallback || [])[2] ?? '')).trim();\n  salaGrade = String(((linhaFallback || [])[4] ?? '')).trim();\n}\n\n// ----- localizar o curso na agenda mensal (sala e demais informações) -----\nfunction normalize(s = '') {\n  return String(s || '')\n    .normalize('NFD')\n    .replace(/[̀-ͯ]/g, '')\n    .toLowerCase()\n    .replace(/[^\\p{L}\\p{N}]+/gu, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction scoreMatch(a, b) {\n  if (!a || !b) return 0;\n  if (a === b) return 1000;\n  if (a.includes(b) || b.includes(a)) return 800;\n  const ta = new Set(a.split(' ').filter(Boolean));\n  const tb = new Set(b.split(' ').filter(Boolean));\n  let common = 0;\n  for (const t of ta) if (tb.has(t)) common++;\n  if (!common) return 0;\n  return common * 10 - Math.abs(ta.size - tb.size);\n}\n\nconst cursoKey = normalize(nomeCurso);\nlet agendaRow = null;\nlet bestScore = 0;\n\nfor (const a of agenda) {\n  const score = scoreMatch(cursoKey, normalize(a['TÍTULO'] || a['TITULO'] || ''));\n  if (score > bestScore) {\n    bestScore = score;\n    agendaRow = a;\n  }\n}\n\nconst naAgenda = !!agendaRow && bestScore >= 10;\nconst ag = (campo) => (naAgenda ? String(agendaRow[campo] ?? '').trim() : '');\n\n// Prioridade: agenda mensal > aba ID > aviso/vazio\nconst salaAgenda = ag('ESPAÇO') || ag('ESPACO') || ag('LOCAL');\nconst inicioAgenda = ag('INÍCIO') || ag('INICIO');\nconst terminoAgenda = ag('TÉRMINO') || ag('TERMINO');\nconst horarioAgenda = inicioAgenda && terminoAgenda\n  ? `${inicioAgenda} - ${terminoAgenda}`\n  : (inicioAgenda || terminoAgenda);\n\nconst sala = salaAgenda || salaGrade || cfg.AVISO_SALA;\nconst horario = horarioAgenda || horarioGrade;\nconst etapas = ag('ETAPAS');\nconst formato = ag('FORMATO');\nconst gsa = ag('GOOGLE SALA DE AULA');\n\n// ----- formadores: aba ID (D7/D8); se D8 vazio, tenta o campo FORMADORES da agenda -----\nfunction splitNomes(s) {\n  return String(s || '')\n    .replace(/\\r\\n?/g, '\\n')\n    .split(/[,;\\n]+/)\n    .map(v => v.trim())\n    .filter(Boolean);\n}\n\nfunction splitEmails(s) {\n  return String(s || '')\n    .toLowerCase()\n    .split(/[,;\\s]+/)\n    .map(v => v.trim())\n    .filter(Boolean);\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\n\nlet nomesFormadores = splitNomes(formadoresNomesRaw);\nlet emailsFormadores = splitEmails(formadoresEmailsRaw).filter(e => emailRegex.test(e));\n\nif (!emailsFormadores.length && naAgenda) {\n  // Formato da agenda: \"Nome - email\" (um por linha)\n  const linhas = String(agendaRow['FORMADORES'] ?? agendaRow['PROFESSORES'] ?? '')\n    .replace(/\\r\\n?/g, '\\n')\n    .split('\\n')\n    .map(v => v.trim())\n    .filter(Boolean);\n\n  const nomes = [];\n  const emails = [];\n  for (const linha of linhas) {\n    const m = linha.match(/^(.*?)\\s*[-–]\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i) ||\n      linha.match(/^()([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})$/i);\n    if (m) {\n      nomes.push((m[1] || m[2]).trim());\n      emails.push(m[2].trim().toLowerCase());\n    }\n  }\n  if (emails.length) {\n    nomesFormadores = nomesFormadores.length ? nomesFormadores : nomes;\n    emailsFormadores = emails;\n  }\n}\n\nconst professores = [];\nconst seenProf = new Set();\nemailsFormadores.forEach((email, i) => {\n  if (seenProf.has(email)) return;\n  seenProf.add(email);\n  professores.push({\n    PROFESSOR_NOME: nomesFormadores[i] || nomesFormadores[0] || email,\n    PROFESSOR_EMAIL: email\n  });\n});\n\n// ----- frases dinâmicas -----\nfunction parseBR(s) {\n  const m = String(s || '').match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);\n  return m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12, 0, 0) : null;\n}\n\nfunction capitalize(s) {\n  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;\n}\n\nconst alvo = parseBR(prep.target_ddmmyyyy);\nconst hoje = parseBR(prep.hoje);\nconst weekday = alvo ? capitalize(alvo.toLocaleDateString('pt-BR', { weekday: 'long' })) : '';\nconst diff = (alvo && hoje) ? Math.round((alvo - hoje) / 86400000) : null;\nconst masculino = /sábado|domingo/i.test(weekday);\n\nlet fraseAbertura;\nlet refDia;\nif (diff === 0) {\n  fraseAbertura = `Hoje, ${weekday},`;\n  refDia = `de hoje (${weekday})`;\n} else if (diff === 1) {\n  fraseAbertura = `Amanhã, ${weekday},`;\n  refDia = `de amanhã (${weekday})`;\n} else if (diff !== null && diff > 1) {\n  fraseAbertura = masculino\n    ? `No próximo ${weekday}, dia ${prep.target_ddmmyyyy},`\n    : `Na próxima ${weekday}, dia ${prep.target_ddmmyyyy},`;\n  refDia = masculino\n    ? `do próximo ${weekday} (${prep.target_ddmmyyyy})`\n    : `da próxima ${weekday} (${prep.target_ddmmyyyy})`;\n} else {\n  fraseAbertura = `No dia ${prep.target_ddmmyyyy},`;\n  refDia = `do dia ${prep.target_ddmmyyyy}`;\n}\n\nreturn [{\n  json: {\n    CURSO_CORRETO: nomeCurso,\n    CURSO_ERRADO: cfg.CURSO_ERRADO,\n    DATA_ERRO: cfg.DATA_ERRO,\n    DATA: prep.target_ddmmyyyy,\n    DIA_SEMANA: weekday,\n    FRASE_ABERTURA: fraseAbertura,\n    REF_DIA: refDia,\n    HORARIO: horario,\n    SALA: sala,\n    CARGA_HORARIA: cargaHoraria,\n    MODALIDADE: modalidade || formato,\n    DATA_INICIO: dataInicio,\n    ETAPAS: etapas,\n    'GOOGLE SALA DE AULA': gsa,\n    FORMADORES: nomesFormadores.join(', ') || emailsFormadores.join(', '),\n    PROFESSORES: professores,\n    CURSO_NA_AGENDA: naAgenda,\n    SCORE_AGENDA: bestScore\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -3720,
+        -3280,
         400
       ],
-      "id": "380eb798-36bc-453c-a589-cf578af57cde",
+      "id": "6de3d6bc-af14-4d8c-b123-59e572a2ceb9",
       "name": "Code - Dados do Curso"
     },
     {
@@ -101,10 +145,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        -3500,
+        -3060,
         400
       ],
-      "id": "80029236-f3f7-445d-9099-32cac832a5ea",
+      "id": "b4d56ad9-37ff-45b2-9552-6f03bde0d974",
       "name": "HTTP - Ler Alunos (FREQUÊNCIA C3:D)",
       "onError": "continueRegularOutput",
       "alwaysOutputData": true,
@@ -117,15 +161,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// Fila única: TODAS as erratas primeiro e, depois delas, TODOS os avisos\n// com os dados corretos — na mesma ordem de alunos.\nconst curso = $('Code - Dados do Curso').first().json;\n\nconst resp = items[0]?.json || {};\nif (resp.error) {\n  const msg = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'erro desconhecido');\n  throw new Error('Falha ao ler os alunos (FREQUÊNCIA C3:D): ' + msg);\n}\n\nconst rows = Array.isArray(resp.values) ? resp.values : [];\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst seen = new Set();\nconst alunos = [];\n\nfor (const r of rows) {\n  const nome = String((r && r[0]) || '').trim();\n  const email = String((r && r[1]) || '').trim().toLowerCase();\n  if (!email || !emailRegex.test(email)) continue;\n  if (seen.has(email)) continue;\n  seen.add(email);\n  alunos.push({ NOME: nome || email, EMAIL_ALUNO: email });\n}\n\nif (!alunos.length) {\n  return [{\n    json: {\n      TIPO_ENVIO: 'NENHUM',\n      _motivo: 'Nenhum aluno com e-mail válido nas colunas C/D da aba FREQUÊNCIA.'\n    }\n  }];\n}\n\nconst fila = [];\nfor (const a of alunos) {\n  fila.push({ json: { ...curso, ...a, TIPO_ENVIO: 'DESCULPAS' } });\n}\nfor (const a of alunos) {\n  fila.push({ json: { ...curso, ...a, TIPO_ENVIO: 'DADOS' } });\n}\n\nreturn fila.map((f, i) => ({ json: { ...f.json, ORDEM: i + 1, TOTAL_FILA: fila.length } }));"
+        "jsCode": "// Fila única, na ordem:\n//   1) errata para todos os alunos\n//   2) dados corretos para todos os alunos\n//   3) aviso aos formadores (alunos receberam a confirmação)\nconst curso = $('Code - Dados do Curso').first().json;\n\nconst resp = items[0]?.json || {};\nif (resp.error) {\n  const msg = typeof resp.error === 'string' ? resp.error : (resp.error.message || 'erro desconhecido');\n  throw new Error('Falha ao ler os alunos (FREQUÊNCIA C3:D): ' + msg);\n}\n\nconst rows = Array.isArray(resp.values) ? resp.values : [];\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst seen = new Set();\nconst alunos = [];\n\nfor (const r of rows) {\n  const nome = String((r && r[0]) || '').trim();\n  const email = String((r && r[1]) || '').trim().toLowerCase();\n  if (!email || !emailRegex.test(email)) continue;\n  if (seen.has(email)) continue;\n  seen.add(email);\n  alunos.push({ NOME: nome || email, EMAIL_ALUNO: email });\n}\n\nconst professores = Array.isArray(curso.PROFESSORES) ? curso.PROFESSORES : [];\n\nif (!alunos.length && !professores.length) {\n  return [{\n    json: {\n      TIPO_ENVIO: 'NENHUM',\n      _motivo: 'Nenhum aluno (FREQUÊNCIA C/D) nem formador (ID D7/D8 ou agenda) com e-mail válido.'\n    }\n  }];\n}\n\nconst { PROFESSORES, ...cursoBase } = curso;\nconst fila = [];\n\nfor (const a of alunos) {\n  fila.push({ json: { ...cursoBase, ...a, TIPO_ENVIO: 'DESCULPAS' } });\n}\nfor (const a of alunos) {\n  fila.push({ json: { ...cursoBase, ...a, TIPO_ENVIO: 'DADOS' } });\n}\nfor (const p of professores) {\n  fila.push({ json: { ...cursoBase, ...p, TIPO_ENVIO: 'FORMADOR' } });\n}\n\nreturn fila.map((f, i) => ({ json: { ...f.json, ORDEM: i + 1, TOTAL_FILA: fila.length } }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -3280,
+        -2840,
         400
       ],
-      "id": "63aba321-2930-4b6a-970b-6d29c748e8dc",
+      "id": "a3dfbe9a-161b-43e5-bf86-49db70fb6053",
       "name": "Code - Montar Fila de Envios"
     },
     {
@@ -135,10 +179,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -3060,
+        -2620,
         400
       ],
-      "id": "6e2888f9-433a-4ae8-8b2b-2022e8dc0765",
+      "id": "cbebe835-ec68-48c4-b790-67187c315799",
       "name": "Loop Envios"
     },
     {
@@ -152,7 +196,7 @@
           },
           "conditions": [
             {
-              "id": "05440e80-b156-4cc0-8da9-a7d5a10be985",
+              "id": "7bf95c36-f02d-47cc-a33d-9a051c6d7607",
               "leftValue": "={{ $json.TIPO_ENVIO }}",
               "rightValue": "DESCULPAS",
               "operator": {
@@ -168,10 +212,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -2840,
+        -2400,
         480
       ],
-      "id": "ff795d4e-eefc-458d-813a-98b16c93a3dc",
+      "id": "fd81fba5-c020-492d-a016-c65061e5eeb3",
       "name": "IF - E-mail de Desculpas?"
     },
     {
@@ -185,7 +229,7 @@
           },
           "conditions": [
             {
-              "id": "8382d5a6-b7d8-4e35-ae78-3ae1f0d69275",
+              "id": "ca7fc6cc-4735-4a92-9776-e81c523ddbf0",
               "leftValue": "={{ $json.TIPO_ENVIO }}",
               "rightValue": "DADOS",
               "operator": {
@@ -201,11 +245,44 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -2620,
+        -2180,
         620
       ],
-      "id": "2969f532-2298-4136-ad15-91c4fdf9eaa2",
+      "id": "bbb85431-1c35-49e0-97a1-6ab90ee4a53f",
       "name": "IF - E-mail de Dados Corretos?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f2b6b2bd-0a83-4e52-972e-d92cbce64f24",
+              "leftValue": "={{ $json.TIPO_ENVIO }}",
+              "rightValue": "FORMADOR",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1960,
+        760
+      ],
+      "id": "ac352bd9-23f9-4896-a7a1-b72d0a74c53c",
+      "name": "IF - E-mail para Formador?"
     },
     {
       "parameters": {
@@ -220,12 +297,12 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        -2620,
+        -2180,
         380
       ],
-      "id": "764f145d-818f-41b4-977d-0b8bb7e2b2b8",
+      "id": "6aca5177-f15b-4555-9dfb-4cc489e096b1",
       "name": "Gmail - Errata/Desculpas",
-      "webhookId": "220c6f2c-bda8-4b71-89ff-e280eb1319bf",
+      "webhookId": "54763d1c-8b58-4bc3-a46f-b3f5d71e6f35",
       "credentials": {
         "gmailOAuth2": {
           "id": "XWgFO39uPRofIXId",
@@ -243,18 +320,18 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        -2400,
+        -1960,
         380
       ],
-      "id": "6c589263-3b0b-4781-83f7-f51ada4c6377",
+      "id": "063d77ec-7848-4919-bac2-c7dd5f8b70a6",
       "name": "Wait Errata (10s)",
-      "webhookId": "9119f0bc-8e8e-43e1-aa2b-1efdffdb9160"
+      "webhookId": "149bc5b6-4e95-4264-a1f5-4ae9bab66eb0"
     },
     {
       "parameters": {
         "sendTo": "={{ $('Config - Variáveis').first().json.MODO_TESTE ? $('Config - Variáveis').first().json.EMAIL_TESTE : $json.EMAIL_ALUNO }}",
         "subject": "={{ ($('Config - Variáveis').first().json.MODO_TESTE ? '[TESTE p/ ' + $json.EMAIL_ALUNO + '] ' : '') + 'Aviso CECAPE • ' + $json.CURSO_CORRETO + ' • Dia ' + $json.DATA }}",
-        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; background-color: #28b1d4; margin: 0; padding: 20px; }\n    .container { width: 100%; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; }\n\n    .header { background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 4px solid #00accf; }\n    .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n    .header-table td { width: 50%; text-align: center; vertical-align: middle; padding: 10px; }\n\n    .header-table img { width: 100%; max-width: 180px; height: auto; display: inline-block; }\n\n    .content { padding: 35px; background-color: #ffffff; }\n    .card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 5px solid #00accf; margin: 20px 0; }\n\n    .info-label { font-weight: bold; color: #00accf; text-transform: uppercase; font-size: 12px; display: block; }\n\n    h2 { color: #00accf; margin-top: 0; font-size: 22px; text-align: center; }\n\n    .footer { background-color: #00accf; color: #ffffff; text-align: center; padding: 20px; font-size: 13px; font-weight: 300; }\n\n    .no-reply {\n      margin-top: 20px;\n      padding: 15px;\n      background-color: #fff3cd;\n      border: 1px solid #ffeeba;\n      border-radius: 8px;\n      color: #856404;\n      font-size: 13px;\n      text-align: center;\n    }\n\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <table class=\"header-table\">\n        <tr>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-seeduc.png\" alt=\"SEEDUC\"></td>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-cecape.png\" alt=\"CECAPE\"></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"content\">\n      <h2>Olá, <strong>{{ $json[\"NOME\"] }}</strong>!</h2>\n      <p>\n        {{ $json.FRASE_ABERTURA }} teremos um compromisso importante no CECAPE!\n        <br>\n        Seguem os dados <strong>corretos</strong> do seu curso:\n      </p>\n\n      <div class=\"card\">\n        <p><span class=\"info-label\">Data:</span> {{ $json[\"DATA\"] }}</p>\n        <p><span class=\"info-label\">Sala/Local:</span> {{ $json.SALA }}</p>\n        <p><span class=\"info-label\">Horário:</span> {{ $json.HORARIO }}</p>\n        <p><span class=\"info-label\">Curso:</span> {{ $json.CURSO_CORRETO }} </p>\n        <p><span class=\"info-label\">Formador(es):</span> {{ $json[\"FORMADORES\"] }}</p>\n        <p><span class=\"info-label\">Carga horária:</span> {{ $json.CARGA_HORARIA }}</p>\n        <p><span class=\"info-label\">Modalidade:</span> {{ $json.MODALIDADE }}</p>\n        <p><span class=\"info-label\">Início do curso:</span> {{ $json.DATA_INICIO }}</p>\n      </div>\n\n      <p style=\"margin-top: 20px;\">\n        Caso algum dado esteja incorreto, por favor, entre em contato com a secretaria.\n      </p>\n\n      <!-- Aviso de mensagem automática -->\n      <div class=\"no-reply\">\n        ⚠️ Esta é uma mensagem automática enviada pelo sistema do CECAPE.<br>\n        Por favor, não responda este e-mail, pois esta caixa de entrada não é monitorada.\n      </div>\n\n    </div>\n\n    <div class=\"footer\">\n      CECAPE - Centro de Capacitação de Profissionais da Educação<br>\n      Secretaria Municipal de Educação de São Caetano do Sul\n    </div>\n  </div>\n</body>\n</html>",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; background-color: #28b1d4; margin: 0; padding: 20px; }\n    .container { width: 100%; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; }\n\n    .header { background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 4px solid #00accf; }\n    .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n    .header-table td { width: 50%; text-align: center; vertical-align: middle; padding: 10px; }\n\n    .header-table img { width: 100%; max-width: 180px; height: auto; display: inline-block; }\n\n    .content { padding: 35px; background-color: #ffffff; }\n    .card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 5px solid #00accf; margin: 20px 0; }\n\n    .info-label { font-weight: bold; color: #00accf; text-transform: uppercase; font-size: 12px; display: block; }\n\n    h2 { color: #00accf; margin-top: 0; font-size: 22px; text-align: center; }\n\n    .footer { background-color: #00accf; color: #ffffff; text-align: center; padding: 20px; font-size: 13px; font-weight: 300; }\n\n    .no-reply {\n      margin-top: 20px;\n      padding: 15px;\n      background-color: #fff3cd;\n      border: 1px solid #ffeeba;\n      border-radius: 8px;\n      color: #856404;\n      font-size: 13px;\n      text-align: center;\n    }\n\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <table class=\"header-table\">\n        <tr>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-seeduc.png\" alt=\"SEEDUC\"></td>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-cecape.png\" alt=\"CECAPE\"></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"content\">\n      <h2>Olá, <strong>{{ $json[\"NOME\"] }}</strong>!</h2>\n      <p>\n        {{ $json.FRASE_ABERTURA }} teremos um compromisso importante no CECAPE!\n        <br>\n        Seguem os dados <strong>corretos</strong> do seu curso:\n      </p>\n\n      <div class=\"card\">\n        <p><span class=\"info-label\">Data:</span> {{ $json[\"DATA\"] }}</p>\n        <p><span class=\"info-label\">Sala/Local:</span> {{ $json.SALA }}</p>\n        <p><span class=\"info-label\">Horário:</span> {{ $json.HORARIO }}</p>\n        <p><span class=\"info-label\">Curso:</span> {{ $json.CURSO_CORRETO }} </p>\n        <p><span class=\"info-label\">Formador(es):</span> {{ $json[\"FORMADORES\"] }}</p>\n        <p><span class=\"info-label\">Carga horária:</span> {{ $json.CARGA_HORARIA }}</p>\n        <p><span class=\"info-label\">Modalidade:</span> {{ $json.MODALIDADE }}</p>\n        <p><span class=\"info-label\">Início do curso:</span> {{ $json.DATA_INICIO }}</p>\n        <p><span class=\"info-label\">Etapas:</span> {{ $json.ETAPAS }}</p>\n        <p><span class=\"info-label\">Google Sala de Aula:</span> {{ $json[\"GOOGLE SALA DE AULA\"] }}</p>\n      </div>\n\n      <p style=\"margin-top: 20px;\">\n        Caso algum dado esteja incorreto, por favor, entre em contato com a secretaria.\n      </p>\n\n      <!-- Aviso de mensagem automática -->\n      <div class=\"no-reply\">\n        ⚠️ Esta é uma mensagem automática enviada pelo sistema do CECAPE.<br>\n        Por favor, não responda este e-mail, pois esta caixa de entrada não é monitorada.\n      </div>\n\n    </div>\n\n    <div class=\"footer\">\n      CECAPE - Centro de Capacitação de Profissionais da Educação<br>\n      Secretaria Municipal de Educação de São Caetano do Sul\n    </div>\n  </div>\n</body>\n</html>",
         "options": {
           "appendAttribution": false,
           "senderName": "CECAPE - SEEDUC"
@@ -263,12 +340,12 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        -2400,
-        620
+        -1960,
+        560
       ],
-      "id": "110d6f8a-5b34-4555-a085-c621cb2cbfb7",
+      "id": "553cc373-8491-41e6-9927-5ddf18c26cad",
       "name": "Gmail - Dados Corretos",
-      "webhookId": "e132c4dd-da1f-4fae-ab51-35d966f929a4",
+      "webhookId": "07414766-a35f-45a4-b667-efde79bd6b94",
       "credentials": {
         "gmailOAuth2": {
           "id": "XWgFO39uPRofIXId",
@@ -286,24 +363,67 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        -2180,
-        620
+        -1740,
+        560
       ],
-      "id": "ba27e9b7-7337-4bc6-9b2a-4fdd2d83033b",
+      "id": "0debb821-3b92-4814-9824-dd2f330d1b32",
       "name": "Wait Dados (10s)",
-      "webhookId": "3fb4f778-2385-45d7-ad75-a5d3b77c0a55"
+      "webhookId": "7bf0cca1-7982-4615-8218-e9843dd2b521"
     },
     {
       "parameters": {
-        "jsCode": "let fila = [];\ntry {\n  fila = $('Code - Montar Fila de Envios').all().map(i => i.json);\n} catch (e) {\n  fila = [];\n}\n\nconst desculpas = fila.filter(f => f.TIPO_ENVIO === 'DESCULPAS').length;\nconst dados = fila.filter(f => f.TIPO_ENVIO === 'DADOS').length;\n\nreturn [{\n  json: {\n    status: (desculpas + dados) ? 'CONCLUIDO' : 'SEM_ENVIOS',\n    emails_desculpas: desculpas,\n    emails_dados_corretos: dados,\n    mensagem: (desculpas + dados)\n      ? 'Correção enviada: primeiro as erratas, depois os avisos com os dados corretos.'\n      : 'Nenhum aluno com e-mail válido encontrado.'\n  }\n}];"
+        "sendTo": "={{ $('Config - Variáveis').first().json.MODO_TESTE ? $('Config - Variáveis').first().json.EMAIL_TESTE : $json.PROFESSOR_EMAIL }}",
+        "subject": "={{ ($('Config - Variáveis').first().json.MODO_TESTE ? '[TESTE p/ ' + $json.PROFESSOR_EMAIL + '] ' : '') + 'Aviso CECAPE • ' + $json.CURSO_CORRETO + ' • Dia ' + $json.DATA }}",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n <style>\n    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6; background-color: #28b1d4; margin: 0; padding: 20px; }\n    .container { width: 100%; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; }\n\n    .header { background-color: #ffffff; padding: 25px; text-align: center; border-bottom: 4px solid #00accf; }\n    .header-table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n    .header-table td { width: 50%; text-align: center; vertical-align: middle; padding: 10px; }\n\n    .header-table img { width: 100%; max-width: 180px; height: auto; display: inline-block; }\n\n    .content { padding: 35px; background-color: #ffffff; }\n    .card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 5px solid #00accf; margin: 20px 0; }\n\n    .info-label { font-weight: bold; color: #00accf; text-transform: uppercase; font-size: 12px; display: block; }\n\n    h2 { color: #00accf; margin-top: 0; font-size: 22px; text-align: center; }\n\n    .footer { background-color: #00accf; color: #ffffff; text-align: center; padding: 20px; font-size: 13px; font-weight: 300; }\n\n    .no-reply {\n      margin-top: 20px;\n      padding: 15px;\n      background-color: #fff3cd;\n      border: 1px solid #ffeeba;\n      border-radius: 8px;\n      color: #856404;\n      font-size: 13px;\n      text-align: center;\n    }\n\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <table class=\"header-table\">\n        <tr>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-seeduc.png\" alt=\"SEEDUC\"></td>\n          <td><img src=\"https://cecapescs.com.br/logos/logo-cecape.png\" alt=\"CECAPE\"></td>\n        </tr>\n      </table>\n    </div>\n\n    <div class=\"content\">\n      <h2>Olá, <strong>{{ $json.PROFESSOR_NOME }}</strong>!</h2>\n      <p>\n        Informamos que os alunos do curso <strong>{{ $json.CURSO_CORRETO }}</strong> já receberam o\n        e-mail de <strong>confirmação do curso</strong>, referente ao compromisso {{ $json.REF_DIA }}.\n        <br>\n        Seguem os dados de identificação do seu curso:\n      </p>\n\n      <div class=\"card\">\n        <p><span class=\"info-label\">Data:</span> {{ $json[\"DATA\"] }}</p>\n        <p><span class=\"info-label\">Sala/Local:</span> {{ $json.SALA }}</p>\n        <p><span class=\"info-label\">Horário:</span> {{ $json.HORARIO }}</p>\n        <p><span class=\"info-label\">Curso:</span> {{ $json.CURSO_CORRETO }} </p>\n        <p><span class=\"info-label\">Formador(es):</span> {{ $json[\"FORMADORES\"] }}</p>\n        <p><span class=\"info-label\">Carga horária:</span> {{ $json.CARGA_HORARIA }}</p>\n        <p><span class=\"info-label\">Modalidade:</span> {{ $json.MODALIDADE }}</p>\n        <p><span class=\"info-label\">Início do curso:</span> {{ $json.DATA_INICIO }}</p>\n        <p><span class=\"info-label\">Etapas:</span> {{ $json.ETAPAS }}</p>\n        <p><span class=\"info-label\">Google Sala de Aula:</span> {{ $json[\"GOOGLE SALA DE AULA\"] }}</p>\n      </div>\n\n      <p style=\"margin-top: 20px;\">\n        Caso algum dado esteja incorreto, por favor, entre em contato com a secretaria.\n      </p>\n\n      <!-- Aviso de mensagem automática -->\n      <div class=\"no-reply\">\n        ⚠️ Esta é uma mensagem automática enviada pelo sistema do CECAPE.<br>\n        Por favor, não responda este e-mail, pois esta caixa de entrada não é monitorada.\n      </div>\n\n    </div>\n\n    <div class=\"footer\">\n      CECAPE - Centro de Capacitação de Profissionais da Educação<br>\n      Secretaria Municipal de Educação de São Caetano do Sul\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "CECAPE - SEEDUC"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1740,
+        740
+      ],
+      "id": "a1c5fd7a-2a4d-41e5-9ed0-de39675a7bed",
+      "name": "Gmail - Formador",
+      "webhookId": "81a6b36d-3f7a-4be0-8b27-b96e5e6fbf34",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "XWgFO39uPRofIXId",
+          "name": "Gmail account 2"
+        }
+      },
+      "continueOnFail": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "amount": 10,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -1520,
+        740
+      ],
+      "id": "41701076-9b8e-4149-9dcf-6988f02042dd",
+      "name": "Wait Formador (10s)",
+      "webhookId": "2bb5e91d-e5e3-40d8-9e41-df01fa88b6ad"
+    },
+    {
+      "parameters": {
+        "jsCode": "let fila = [];\ntry {\n  fila = $('Code - Montar Fila de Envios').all().map(i => i.json);\n} catch (e) {\n  fila = [];\n}\n\nconst desculpas = fila.filter(f => f.TIPO_ENVIO === 'DESCULPAS').length;\nconst dados = fila.filter(f => f.TIPO_ENVIO === 'DADOS').length;\nconst formadores = fila.filter(f => f.TIPO_ENVIO === 'FORMADOR').length;\n\nreturn [{\n  json: {\n    status: (desculpas + dados + formadores) ? 'CONCLUIDO' : 'SEM_ENVIOS',\n    emails_desculpas: desculpas,\n    emails_dados_corretos: dados,\n    emails_formadores: formadores,\n    mensagem: (desculpas + dados + formadores)\n      ? 'Correção enviada: erratas, depois dados corretos aos alunos e, por fim, aviso aos formadores.'\n      : 'Nenhum destinatário com e-mail válido encontrado.'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2840,
+        -2400,
         240
       ],
-      "id": "53ac7ecc-596c-465d-abb6-a2b51af749d2",
+      "id": "c7a2119c-7760-46e6-a45f-bc4c42ef3b60",
       "name": "Code - Resumo Final"
     }
   ],
@@ -332,6 +452,28 @@
       ]
     },
     "Preparar Data": {
+      "main": [
+        [
+          {
+            "node": "Sheets - Agenda Mensal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets - Agenda Mensal": {
+      "main": [
+        [
+          {
+            "node": "Code - Agenda do Dia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Agenda do Dia": {
       "main": [
         [
           {
@@ -433,6 +575,24 @@
         ],
         [
           {
+            "node": "IF - E-mail para Formador?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - E-mail para Formador?": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Formador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Loop Envios",
             "type": "main",
             "index": 0
@@ -474,6 +634,28 @@
       ]
     },
     "Wait Dados (10s)": {
+      "main": [
+        [
+          {
+            "node": "Loop Envios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Formador": {
+      "main": [
+        [
+          {
+            "node": "Wait Formador (10s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Formador (10s)": {
       "main": [
         [
           {
